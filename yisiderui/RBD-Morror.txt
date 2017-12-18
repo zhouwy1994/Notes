@@ -1,0 +1,89 @@
+================================================================
+			Study on RBD Mirror
+				zhouwy
+================================================================
+RBD 是实现远程备份,容灾的一个机制,主要针对不同的集群之间的镜像备份(Mirror)
+CEPH OSD pool 的replication 是同一个集群间的高可用机制，而Mirror是不同集群间的异地容灾
+
+RBD Mirror的原理和机制
+1.用户操作块设备向块设备中写入数据时，librbd首先将写操作写入日志，当日志写入完毕后应答用户写操作完毕。之后日志向本地块设备写入数据，
+于此同时日志通过rbd-mirror守护进程将日志发送到对端ceph集群。对端ceph集群将日志内容写入到块设备中，由此完成块设备的同步功能。由此看到
+rbd-mirror的核心在于rbd-mirror守护进程和块设备写入的日志。
+2.数据流向 (local)io-write --------->librbd-------->image------osd
+                                               |
+											   |
+	(remote)image<---------rbd-mirror<-------image journal
+
+如果要使用rbd-mirror，image 需 要 使 能 rbd exclusive-lock/journaling feature/exclusive-lock(first) 
+有两种办法可以使能image 的xclusive-lock/journaling
+1.修改配置文件ceph.conf在global 域 中添加 rbd default features=125 #这样以后新建立的image都回使能mirror
+2.用命令使能rbd feature enable <pool-name>/<image-name> <feature-name> example:rbd feature enable rbd/images exclusive-lock,journaling
+3.在创建image时指定 rbd create --size 10G images --pool rbd --image-feature exclusive-lock,journaling
+
+rbd-mirror 在备份端运行，负责将 journal entry 拉倒备份端，然后进行 replay，恢复主端操作，实现数据备份一个镜像从一个主集群同步到备份集群
+mirror 可以针对某个 image 进行，也可以针对某个 pool 进行。如果是针对 pool，意味着对 pool 内的所有 image 进行备份。
+对已经的 开始备份的 image ，如果备份端 rbd-mirror  进程停止， 那么的产生的journal会因为没有消费 者 取用 一直 存在 ，占用 额外空间
+也就是说，主集群
+
+
+配置rbd-mirror
+1.将两个集群的ceph.conf ceph.client.admin.keyring 备份并拷贝一份到对方节点(此节点为双方集群的leade mon节点)
+以上步骤完成后ceph -s --cluster local or remote都可以看见对方(主集群和备份集群)
+2.使能image exclusive-lock and journaling feature ,因为Rbd mirror 依赖 journaling，journaling 依赖 exclusive-lock
+如果已经在ceph.conf中修改时(rbd default features=125)，不用修改了,创建完成的卷也可使能rbd feature enable <pool-name>/<image-name> <feature-name>
+3.使能nirror 
+mirror有两种模式(mode) pool image
+rbd mirror pool enable <pool-name> <mode>
+<mode>是 pool 或者 image，如果是 pool mode，则 pool-name 下的所有 image 都会备份。如果是 image mode，则还需要显式指定哪个 image 需要备份。
+测试中使用 image mode。
+4.步骤:
+1.在远端和主端同时建立同名称的池
+2.使能新建pool的mirror mode (image or pool)
+3.互相添加peer(两端都进行一次)
+3.使能新建image 并使能 featuar 和 mirror
+
+
+*****要先使能pool mirror模式再能添加到peer，而且只能是相同的名字pool，两边都要建立，
+image 使能exclusive-lock,journaling 还要额外rbd mirror image enable pool/image 使能mirror
+remote 就能看见loal 端建立的image
+rados ls -p poolname 查看对象
+rbd mirror pool info
+rbd mirror pool status
+rbd mirror image status #最后一项 entries behind mater = 0 说明跟主端是一直的，>0 说明正在 replay。
+
+删除镜像要先解除映射，（是否要disable mirror for image or feature disable exclusive-lock,journaling）
+rbd-nbd unmap /dev/nbd0
+rbd mirror image resync pools1/images --cluster remote #重新同步
+先enable pool mirror mode 再enable image mode
+
+ceph quorum_status 查看法定人数，并找出leader
+my_exit "$err" "$success_msg" "$res" #ui 判断的标准
+
+rbd mirror pool info 查看peer状态 但是默认是rbd 加选项-p poolname 大部分命令都须指定poolsname
+pool互相移出peer之后才会暂停备份
+
+image status
+pool mirroe status 都只能在remote上查看
+
+ec_pool的建立步骤
+ceph osd erasure-code-profile set ec51 k=5 m=1 plugin=isa technique=reed_sol_van ruleset-failure-domain=osd;
+ceph osd pool create ec_pool 512 erasure ec51;
+ceph osd pool set ec_pool min_size 5;
+ceph osd pool set ec_pool allow_ec_overwrites true;
+
+第一步设置ec的规则，刚才也跟jacky讨论了ec规则确定
+但是 好像没听到结论，你问问jacky ec 规则是什么？是我们自己定还是怎么获取？
+第2步就是创建ec pool
+第三步是跟规则相关的
+最后一步是必须的
+
+
+rbd mirror status有
+
+
+
+
+
+
+
+===================================================

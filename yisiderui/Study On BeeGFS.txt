@@ -1,0 +1,284 @@
+CentOS下BeeGFS的安装小结
+
+
+1. 配置信息
+① Software
+所有节点均为CentOS 7.1的虚拟机。
+另外，物理机为百兆网卡，虚拟机为千兆网卡。
+
+② Host Services
+BeeGFS-01（192.168.28.165）：Management Server
+BeeGFS-02（192.168.28.166）：Metadata Server
+BeeGFS-03（192.168.28.167）：Storage Server
+BeeGFS-04（192.168.28.168）：Client
+BeeGFS-05（192.168.28.169）：Admon Server (optional for graphical interface)
+
+③ Storage
+Storage servers with RAID 6 data partition formatted with xfs。
+Metadata servers with RAID 1 data partition formatted with ext4。
+
+
+2. 更新源服务器地址（可选步骤）
+“网速较慢”或者“安装软件失败”的情况下，可以考虑替换成国内的镜像：
+
+① 备份原镜像文件
+$ sudo mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak
+
+② 下载CentOS-Base.repo到/etc/yum.repos.d/
+$ sudo wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+
+③ 重新生成缓存
+$ yum clean all
+$ yum makecache
+
+④ 更新系统
+$ sudo yum -y update
+
+
+3. 时间同步（可选步骤）
+$ sudo yum install -y ntp
+$ sudo service ntpd start
+
+
+4. RAID配置
+mdadm是Multiple Devices Admin 的简称，它是Linux下的一款标准的软件RAID管理工具。
+
+① BeeGFS-02（Metadata Server）配置RAID 1
+RAID 1至少需要2块盘，使用fdisk命令对/dev/sdb和/dev/sdc进行分区：
+$ sudo fdisk /dev/sdb
+$ sudo fdisk /dev/sdc
+
+创建RAID 1：
+$ sudo yum install -y mdadm
+$ sudo mdadm -C /dev/md1 -ayes -l1 -n2 /dev/sd[b,c]1
+
+查看RAID 1状态：
+$ cat /proc/mdstat
+$ sudo mdadm -D /dev/md1
+
+格式化磁盘阵列：
+$ sudo mkfs.ext4 /dev/md1
+
+建立挂载点并挂载：
+$ sudo mkdir -p /data
+$ sudo mount /dev/md1 /data
+
+写入/etc/fstab：
+$ echo /dev/md1 /data   ext4    defaults    0   0 | sudo tee -a /etc/fstab
+
+打开Metadata Server的扩展属性功能：
+sudo tune2fs -o user_xattr /dev/md1
+
+② BeeGFS-03（Storage Server）配置RAID 6
+RAID 6至少需要4块盘，使用fdisk命令对/dev/sdb、/dev/sdc、/dev/sdd和/dev/sde进行分区：
+$ sudo fdisk /dev/sdb
+$ sudo fdisk /dev/sdc
+$ sudo fdisk /dev/sdd
+$ sudo fdisk /dev/sde
+
+创建RAID 6：
+$ sudo yum install -y mdadm
+$ sudo mdadm --create /dev/md1 --level=6 --raid-devices=4 /dev/sd[b,c,d,e]1
+
+查看RAID 6状态：
+$ cat /proc/mdstat
+$ sudo mdadm -D /dev/md1
+
+格式化磁盘阵列：
+$ sudo mkfs.xfs /dev/md1
+
+建立挂载点并挂载：
+$ sudo mkdir -p /mnt/md1
+$ sudo mount /dev/md1 /mnt/md1
+
+写入/etc/fstab：
+$ echo /dev/md1 /mnt/md1  xfs     defaults    0   0 | sudo tee -a /etc/fstab
+
+类似的，还可以对/dev/sdf、/dev/sdg、/dev/sdh和/dev/sdi配置RAID 6，并挂载到/mnt/md2。
+
+
+5. YUM安装
+① 所有节点下载CentOS-Base.repo到/etc/yum.repos.d/
+$ sudo wget -O /etc/yum.repos.d/beegfs-rhel7.repo http://www.beegfs.io/release/beegfs_6/dists/beegfs-rhel7.repo
+
+② 下载安装
+BeeGFS-01节点安装Management Service：
+$ sudo yum install -y beegfs-mgmtd
+
+BeeGFS-02节点安装Metadata Service：
+$ sudo yum install -y beegfs-meta
+
+BeeGFS-03节点安装Storage Service：
+$ sudo yum install -y beegfs-storage
+
+BeeGFS-04节点安装Client and Command-line Utils：
+$ sudo yum install -y beegfs-client beegfs-helperd beegfs-utils
+
+BeeGFS-05节点安装Admon Service（可选步骤）：
+$ sudo yum install -y beegfs-admon
+
+③ BeeGFS-04节点Client Kernel Module Autobuild（如果没有RDMA-capable network hardware，则忽略该步骤）
+$ sudo vi /etc/beegfs/beegfs-client-autobuild.conf
+Find the option "buildArgs" and set it to enabled ibverbs support:
+buildArgs=-j8 BEEGFS_OPENTK_IBVERBS=1
+
+If you installed separate OFED kernel modules, add the OFED_INCLUDE_PATH:
+buildArgs=-j8 BEEGFS_OPENTK_IBVERBS=1 OFED_INCLUDE_PATH=/usr/src/openib/include
+
+重构client kernel module：
+$ sudo /etc/init.d/beegfs-client rebuild
+
+④ 基本配置
+BeeGFS-02、BeeGFS-03、BeeGFS-04和BeeGFS-05节点都需要更新/etc/hosts：
+$ echo 192.168.28.165   BeeGFS-01 | sudo tee -a /etc/hosts
+
+BeeGFS-01节点配置Management Service：
+$ sudo /opt/beegfs/sbin/beegfs-setup-mgmtd -p /data/beegfs/beegfs_mgmtd
+
+BeeGFS-02节点配置Metadata Service（Metadata Service ID的范围为从1到65535，此处ID使用的2）：
+$ sudo /opt/beegfs/sbin/beegfs-setup-meta -p /data/beegfs/beegfs_meta -s 2 -m BeeGFS-01
+
+BeeGFS-03节点配置Storage Service（Storage Service/Target ID的范围为从1到65535，此处Storage Service ID使用的3，Storage Target ID使用的301）：
+$ sudo /opt/beegfs/sbin/beegfs-setup-storage -p /mnt/md1/beegfs_storage -s 3 -i 301 -m BeeGFS-01
+
+BeeGFS-03节点添加一个Storage Target（可选步骤）：
+$ sudo /opt/beegfs/sbin/beegfs-setup-storage -p /mnt/md2/beegfs_storage -s 3 -i 302
+
+BeeGFS-04节点配置Client（BeeGFS默认会挂载到/mnt/beegfs，可以自行在配置文件/etc/beegfs/beegfs-mounts.conf中修改）：
+$ sudo /opt/beegfs/sbin/beegfs-setup-client -m BeeGFS-01
+
+BeeGFS-05节点修改配置文件：
+$ sudo vi /etc/beegfs/beegfs-admon.conf
+sysMgmtdHost=BeeGFS-01
+
+
+⑤ 启动服务
+BeeGFS-01节点启动Management Service：
+$ sudo systemctl start beegfs-mgmtd
+
+BeeGFS-02节点启动Metadata Service：
+$ sudo systemctl start beegfs-meta
+
+BeeGFS-03节点启动Storage Service：
+$ sudo systemctl start beegfs-storage
+
+BeeGFS-04节点启动Client：
+$ sudo systemctl start beegfs-helperd
+$ sudo systemctl start beegfs-client
+
+BeeGFS-05节点启动Admon Service：
+$ sudo systemctl start beegfs-admon
+
+BeeGFS-05节点启动Admon UI（可选步骤）：
+$ sudo yum install -y java
+$ java -jar /opt/beegfs/beegfs-admon-gui/beegfs-admon-gui.jar
+我的环境上，这一步报错：Your environment doesn't support a graphical user interface. Is a X-environment available or X-forwarding in your ssh session enabled?
+
+
+⑥ 客户端测试
+$ beegfs-ctl --listnodes --nodetype=meta --details
+$ beegfs-ctl --listnodes --nodetype=storage --details
+$ beegfs-ctl --listnodes --nodetype=client --details
+$ beegfs-net
+
+
+6. 性能测试
+① dd测试
+客户端写入1G数据：
+$ mkdir -p /mnt/beegfs/dd_test
+$ dd if=/dev/zero of=/mnt/beegfs/dd_test/test_file bs=1000000 count=1000
+
+测试结果：
+1000+0 records in
+1000+0 records out
+1000000000 bytes (1.0 GB) copied, 10.1934 s, 98.1 MB/s
+
+② sysbench测试
+$ sudo yum install -y sysbench
+$ mkdir -p /mnt/beegfs/sysbench_test
+$ cd /mnt/beegfs/sysbench_test
+$ sysbench --test=fileio --threads=2 --file-total-size=512M --file-test-mode=rndrw prepare
+$ sysbench --test=fileio --threads=2 --file-total-size=512M --file-test-mode=rndrw run
+$ sysbench --test=fileio --threads=2 --file-total-size=512M --file-test-mode=rndrw cleanup
+
+测试结果：
+File operations:
+    reads/s:                      89.92
+    writes/s:                     59.95
+    fsyncs/s:                     189.14
+
+Throughput:
+    read, MiB/s:                  1.41
+    written, MiB/s:               0.94
+
+General statistics:
+    total time:                          10.0033s
+    total number of events:              3393
+
+Latency (ms):
+         min:                                  0.00
+         avg:                                  5.88
+         max:                               1315.41
+         95th percentile:                     12.98
+         sum:                              19963.77
+
+Threads fairness:
+    events (avg/stddev):           1696.5000/12.50
+    execution time (avg/stddev):   9.9819/0.00
+
+    
+③ Fio测试
+$ sudo yum install -y fio
+$ mkdir -p /mnt/beegfs/fio_test
+$ touch /mnt/beegfs/fio_test/test_file
+
+顺序读：
+$ fio -filename=/mnt/beegfs/fio_test/test_file -direct=1 -iodepth 1 -thread -rw=read -ioengine=psync -bs=16k -size=1G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
+测试结果：
+READ: io=30720MB, aggrb=152289KB/s, minb=152289KB/s, maxb=152289KB/s, mint=206562msec, maxt=206562msec
+
+顺序写：
+$ fio -filename=/mnt/beegfs/fio_test/test_file -direct=1 -iodepth 1 -thread -rw=write -ioengine=psync -bs=16k -size=1G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
+测试结果：
+WRITE: io=524576KB, aggrb=1710KB/s, minb=1710KB/s, maxb=1710KB/s, mint=306653msec, maxt=306653msec
+
+
+$ fio -filename=/mnt/beegfs/fio_test/test_file -direct=1 -iodepth 1 -thread -rw=randread -ioengine=psync -bs=16k -size=1G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
+测试结果：
+
+
+随机写：
+$ fio -filename=/mnt/beegfs/fio_test/test_file -direct=1 -iodepth 1 -thread -rw=randwrite -ioengine=psync -bs=16k -size=1G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
+测试结果：
+
+
+混合随机读写：
+$ fio -filename=/mnt/beegfs/fio_test/test_file -direct=1 -iodepth 1 -thread -rw=randrw -rwmixread=70 -ioengine=psync -bs=16k -size=1G -numjobs=30 -runtime=100 -group_reporting -name=mytest -ioscheduler=noop
+测试结果：
+
+
+blocksize可以自行调整：一般而言，4k、8k是针对小文件，128k、256k是针对大文件。
+
+
+7. RPM安装
+① 查看ChangeLog
+http://www.beegfs.io/release/beegfs_6/Changelog.txt
+
+② 最新RPM包的路径
+http://www.beegfs.io/release/beegfs_6/dists/rhel7/x86_64/
+
+
+8. 源码安装
+$ sudo yum install -y git
+$ git clone https://git.beegfs.com/pub/v6.git
+
+
+9. 参考资料
+①《Installation Commands Walk-Through (Quickstart Guide)》，http://www.beegfs.com/wiki/ManualInstallWalkThrough
+
+
+
+
+
+
+

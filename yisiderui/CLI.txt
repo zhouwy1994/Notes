@@ -1,0 +1,139 @@
+CLI编译依赖环境:
+1.apt-get install libedit-dev
+2.apt-get install checkinstall
+3.
+
+
+
+
+
+bug fix:
+1.DSSBJ-1306:[1707250233-thundercli]Pool，image and snap name length have no limit.
+
+Description:
+denali@gyx30:~$ cat /etc/denali-release 
+DENALI_RELEASE=dev
+DENALI_BUILD=1707250233
+DENALI_BUILDTIME="Tue Jul 25 02:33:22 UTC 2017"
+DENALI_TYPE=Ubuntu
+DENALI_CLI=no
+LOCATION=China
+export LOCATION
+Environment
+vm：192.168.29.12/14/15
+Step
+When create pool image and snap , name length can created more 128 character .
+Expection:
+Length should:1~128
+
+state:done
+
+2.DSSBJ-1308:Pool image and snap name should restrict special character.
+
+Description:
+denali@gyx30:~$ cat /etc/denali-release 
+DENALI_RELEASE=dev
+DENALI_BUILD=1707250233
+DENALI_BUILDTIME="Tue Jul 25 02:33:22 UTC 2017"
+DENALI_TYPE=Ubuntu
+DENALI_CLI=no
+LOCATION=China
+export LOCATION
+Environment
+vm：192.168.29.12/14/15
+Step
+Create pool ,image and snap ,name should restrict special character to _ . -
+
+state:in progress
+3.DSSBJ-1309:[1707250233-thundercli]Create pool with special character prompt err code
+Description:
+denali@gyx30:~$ cat /etc/denali-release 
+DENALI_RELEASE=dev
+DENALI_BUILD=1707250233
+DENALI_BUILDTIME="Tue Jul 25 02:33:22 UTC 2017"
+DENALI_TYPE=Ubuntu
+DENALI_CLI=no
+LOCATION=China
+export LOCATION
+Environment
+vm：192.168.29.12/14/15
+Step
+07/27 15:09:31 denali@gyx30# tbpool create ni* replicated 256
+Failed to create pool 'ni*', ret is 7201
+
+07/27 15:01:48 denali@gyx30# tbpool create -.12 replicated 256
+Failed to create pool '-.12', ret is 7201
+
+It should promote that it should not contain that special character
+
+state:in progress
+
+
+
+
+
+
+
+
+
+CEPH API学习:
+要与ceph实现数据交换，必须经历一下步骤
+1.获取集群句柄
+2.利用cluster 句柄连接集群
+3.创建I/O上下文环境,如果没有存储池，需要先新建一个存储池。
+
+若干RBD映像API
+声明RBD对象，创建rbd映像
+
+大型代码的命令行解解析都不会返回在功能实现部分，都会放在tool中，就像ceph一样，它的命令行解析放在src/tool/rbd
+(困惑我几天)
+CLI调用librbd or librados库时要检查
+hcsh c层是否调用api.c层代码
+api.c层是否调用ceph代码
+api是否被 dlsym
+api.h 是否exporto
+
+同步和异步读写区别
+同步:一个线程去做一件事情(可以看作是阻塞)，在做这件事时不可以做其他事
+异步:多个线程去做一件事（可看作非阻塞），在做这件事时可作其它事
+
+整整三天
+extern "C" int rbd_aio_read2(rbd_image_t image, uint64_t off, size_t len,
+			      char *buf, rbd_completion_t c, int op_flags)
+rbd_completion_t c 这个东西，异步读写的关键
+参数解释:image :image_ctx image context
+off :read image offset(从多少偏移开始读)
+len:读多少长度
+buf:读取数据的容器
+op_flags：读取的规则
+
+最让人头疼的:
+rbd_completion_t c
+是一个开辟异步读写线程的关键数据结构，他让每一次rbd_aio_read2都开辟一个线程
+所以每一次在调用int rbd_aio_read2之前都会调用`
+extern "C" int rbd_aio_create_completion(void *cb_arg,
+					 rbd_callback_t complete_cb,
+					 rbd_completion_t *c)
+					 
+rbd_aio_create_completion函数创建rbd_completion_t c结构
+typedef void *rbd_completion_t;
+typedef void (*rbd_callback_t)(rbd_completion_t cb, void *arg);
+rbd_callback_t 回调函数,可随便定义一个，
+最重要是要有延时(即上一个线程执行完毕后，才可执行下一个)
+qweASD@!1
+extern "C" int rbd_aio_wait_for_complete(rbd_completion_t c)
+{
+  librbd::RBD::AioCompletion *comp = (librbd::RBD::AioCompletion *)c;
+  return comp->wait_for_complete();
+}
+等待进程结束
+导出snap两种方式
+1.ceph方法，打开image之后rbd_snap_set
+2.直接将snap ctx作为读写
+
+
+
+
+
+
+

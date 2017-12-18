@@ -1,0 +1,34 @@
+1.学习Ceph的理论知识:
+	1.1 Ceph概述
+	1.2 Ceph的功能组件
+		1.2.1 RADOS
+		1.2.2 OSD
+		1.2.3 MON
+		1.2.4 Librados
+		1.2.5 RBD、RGW
+	1.3 Ceph架构和设计思想
+	1.4 CRUSH基本原理
+		1.2.1　Object与PG
+		1.2.2　PG与OSD
+		1.2.3　PG与Pool
+	1.5 CRUSH关系分析
+	1.6 Ceph的三种存储方式
+		1.6.1 Block Stor
+		1.6.2 Object Stor
+		1.6.3 CephFS
+		
+2.利用Virtuarbox搭建了五台虚拟机环境(ubuntu14.04.LTS)，分别以单节点和多节点的方式搭建了ceph Cluster
+
+3.在搭建的环境上学习了ceph.conf文件的配置(mon与osd的添加与删除)
+
+4.练习了ceph基础命令的使用
+
+5.利用vagrant构建了一个ThunderBD的环境并初始化
+
+6.通过CLI和UI两种方式建立pool，image
+
+7.学习了RDB的两种挂载方式
+	7.1 Kernel模块（简称KRBD）方式。:rbd-nbd map
+	7.2 利用QEMU模拟器通过librbd方式。(还没实践)
+
+8.学习iSCSI协议，并通过iSCSI协议将NBD导出，在物理机上挂载(服务器Tgt方式,客户端open-iSCSI)

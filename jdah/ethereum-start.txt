@@ -1,0 +1,130 @@
+node-01:"enode://1ffd2aff01efac1850fa7da5a28c849aa2bd399b92c3acea1ff030083915584a08c38340f8063bc6ebf5dfd0f344a35fc47ecb7d2f685a450013b5baea6c2448@192.168.0.100:61910"
+node-02:"enode://8fd61f010dbe750e7f477c6092a89651e864b90e79d4fb0e91b30b4759031df9e32f73d7f52d0c7f020413cea3a3ae4df3a009075e0cd24bb052a8f89df31d11@192.168.0.100:61911"
+node-03:"enode://4b0946156f674e9ad7b5ceadae5d1c0c3bd015fef4c3909add6349114c077fc5bc0c2e0aa0f9c47847211676d7ce60d13d1a3000fefaf12b0538c17abdff3758@192.168.0.1:61912"
+
+
+
+startup parameter
+node-01:geth --datadir ./node-01 --networkid 314590 --ipcdisable --port 61910 --rpcport 8200 console
+node-02:geth --datadir ./node-02 --networkid 314590 --ipcdisable --port 61911 --rpcport 8201 console
+node-03:geth --datadir ./node-03 --networkid 314590 --ipcdisable --port 61912 --rpcport 8202 console
+
+init gensis.json
+node-01:geth --datadir ./node-01 init gensis.json
+node-02:geth --datadir ./node-02 init gensis.json
+node-03:geth --datadir ./node-03 init gensis.json
+
+install truffle frame
+npm config set registry https://registry.npm.taobao.org
+npm install -g truffle
+
+uninstall truffle frame
+npm uninstall -g truffle
+
+webpack
+truffle unbox webpack
+webpack 官方
+
+这个盒子是我们使用Webpack最正式的官方实现。包括合同，迁移，测试，用户界面和webpack构建管道。
+
+安装
+
+全球安装松露。
+
+ npm install -g truffle
+下载该框。这也负责安装必要的依赖关系。
+
+ truffle unbox webpack
+运行开发控制台。
+
+ truffle develop
+编译并迁移智能合约。注意在开发控制台里面，我们不用前面的命令truffle。
+
+ compile
+ migrate
+运行webpack服务器进行前端热重新加载（在开发控制台之外）。智能合同更改必须手动重新编译和迁移。
+
+ // Serves the front-end on http://localhost:8080
+ npm run dev
+松露可以使用Solidity或JavaScript对智能合约进行测试。注意，如果您处于开发控制台之内或之外，该命令稍有不同。
+
+// If inside the development console.
+test
+
+// If outside the development console..
+truffle test
+常问问题
+
+我如何使用EthereumJS TestRPC？
+
+这和修改配置文件一样简单！查看我们有关添加网络配置的文档。根据您使用的端口，您还需要更新96和98行app/javascripts/app.js。
+
+我遇到此错误：错误：无法解析'../build/contracts/MetaCoin.json'
+
+这意味着您尚未编译或迁移您的合同。运行truffle develop，compile和migrate第一。
+
+完整的错误：
+
+ERROR in ./app/main.js
+Module not found: Error: Can't resolve '../build/contracts/MetaCoin.json' in '/Users/tim/Documents/workspace/Consensys/test3/app'
+ @ ./app/main.js 11:16-59
+ 
+ 
+ 
+ 
+ 
+ 
+ module.exports = {
+  networks: {
+    development: {
+      host: "localhost",
+      port: 8545,
+      network_id: "*"
+    },
+    staging: {
+      host: "localhost",
+      port: 8546,
+      network_id: 1337
+    },
+    ropsten: {
+      host: "158.253.8.12",
+      port: 8545,
+      network_id: 3
+    }
+  }
+};
+ 
+ 
+  > geth --datadir ./node --minerthreads 1 --ethash.dagdir "F:\Ethash" --networkid 314590 --ipcdisable --port 61910 --rpc --rpcapi 'web3,eth,net' --rpccorsdomain '*' --rpcport 8200 console
+    INFO [06-24|19:15:09] Starting peer-to-peer node               instance=Geth/v1.6.1-stable-021c3c28/linux-amd64/go1.8.1
+#####....这里是很多书输出的日志信息....#####
+    Welcome to the Geth JavaScript console!
+	
+	
+	txpool.status //待交易
+	
+	删除./contract目录下的自带demo合约，切记不要删除./contract/Migrations.sol合约，它是Truffle用来帮助部署的。
+	
+	
+	module.exports = {
+  networks: {
+    development: {
+      host: "127.0.0.1",
+      port: 8200,
+      network_id: "314590" // Match any network id
+    }
+  }
+};
+
+
+INFO [11-14|18:00:31] Submitted transaction                    fullhash=0x013c1bd12661013bcfa3287207a3203f5bae02d8a8a1250 //确认交易
+
+
+
+pure is a new keyword that indicates function does not modify blockchain state and does not read from it. 
+You function declaration should look like this function multiply(uint a) public pure returns(uint d) {
+
+
+本文按照公司的服务类别类别总结了40家国外目前区块链的创业公司，旨在帮助技术人员和创业人员加深对区块链技术和行业的认知。服务类别总体分类2类：金融服务和非金融服务，其中金融服务包括电子商务，保险服务，转账支付，供应链管理，资产管理，证券服务，区块链P2P，
+区块链众筹，区块链支付，区块链借记卡等；非金融服务包括基础设施，数据存储，数据分析，新闻资讯，身份认证，知识产权，防伪公正，社交通信，物联网，浏览器，DNS，电子投票，学历认证，电子病例等。
+

@@ -1,0 +1,164 @@
+1.删除远端集群
+需求分析：
+UI选择删除集群，底层操作 
+移出peer关系(主从上都进行)
+判断是否有备份动作，提示是否确定删除
+删除是否应该删除本地journal
+是否应该删除本地配置文件
+是否版本都是一致,是不是所有的集群名可选还是固定
+是否应该kill掉远端的rbd-mirror进程
+删除远端集群时要清空远端已经备份
+1.删除远端集群的最终目的是否是删除/etc/ceph/remote.conf 和remote.client.admin.keyring 达到集群之间不可见
+2.如果需要删除上面所说的配置文件,是否要先将所有池remove出peer
+3.如果删除集群时有数据正在replaying,是否force，或者在UI上给出提示
+4.删除远端集群时是否应该kill掉remote上的rbd-mirror进程
+
+参数
+ip地址
+client.admin(ceph 客户端信息)
+
+4.创建远程复制
+可以选择池还是image
+参数:pool-name
+image-name
+cluster_ipaddr
+ceph osd erasure-code-profile set ec51 k=5 m=1 plugin=isa technique=reed_sol_van ruleset-failure-domain=osd;
+ceph osd pool create ec_pool 512 erasure ec51;
+ceph osd pool set ec_pool min_size 5;
+ceph osd pool set ec_pool allow_ec_overwrites true;
+
+EC的故障域:
+osd:磁盘层次的故障域
+host:服务器(主机)层次的故障域
+chassis:机架层次的故障域
+k:数据块
+m:校验快
+k + m 不能大于osd,host,chassis(对应的)
+大于之后rbd ls -p卡住
+获取ec_file的info
+sudo ceph osd erasure-code-profile get $profile 
+如果primary image使用了ec pool，需要在备份端预先创建相同pool name的data pool。
+存在问题:
+如果远端已经存在与local同名的pool但remote的pool类型不是ec_pool，怎么办
+
+RBD 现在支持镜像存储于一个EC池中，通过使用新的(实验性的) overwrite 支持。镜像必须使用新的RBD CLI ‘-data-pool <ec pool >’ 配置项在指定的EC池中创建，
+用于存储后端对象数据。直接向一个EC池中创建镜像将不会成功，因为镜像的后端元数据只支持存放于副本池内。
+rbd-mirror 程序现在支持从主镜像向从镜像复制动态的镜像特性更新以及镜像元数据的键值对。
+镜像快照的个数现在可以限定到某个可配置的最大值。
+RBD 的 Python API 现在支持异步IO操作了。
+
+
+刘福财
+第一步设置ec的规则，刚才也跟jacky讨论了ec规则确定
+刘福财
+但是 好像没听到结论，你问问jacky ec 规则是什么？是我们自己定还是怎么获取？
+刘福财
+第2步就是创建ec pool
+刘福财
+第三步是跟规则相关的
+刘福财
+最后一步是必须的
+
+
+6.升级/主从切换
+fucai,我想咨询一个问题，关于image的升级与降级,ceph Docm里面是这么说的:
+在需要把主名称转移到同伴 Ceph 集群这样一个故障切换场景中，应该停止所有对
+主 image 的访问（比如关闭 VM 的电源或移除 VM 的相关驱动），当前的主 image 
+降级为副，原副 image 升级为主，然后在备份集群上恢复对该 image 访问。
+
+上面说的在降级主image时，应该停止对主 image 的访问，那我怎么去检测image有没有访问，又怎么去停止这些访问
+
+集群层面:
+主从切换：从image升级 disable image 清除所有配置文件
+
+remote应该做什么步骤：
+1.检测能不能ping通local(检测是不是网络断连)
+2.ping 通则删除远端配置文件，删除peer
+3.升级所有image，disable image，disable pool mode:image
+
+upgrade_image
+kill_rbd_mirror_remote
+destroy_config_file
+
+必须保证mirror enable 才能操作image mirror feature
+
+fucai,之前的主从升级是从image的层面的切换，现在jacky说要实现集群层面的主从切换，就是说当主节点在极端情况下（数据不可访问，现在要将之前的remote端变成
+一个独立的数据中心），以我的理解，需要做下面几步:
+1.首先将所有image升级为主image
+2.disable掉所有image 的mirror
+3.disable掉所有pool的mirror mode:image
+4.kill rbd-mirror process
+5.删除配置文件
+
+fucai
+只需要做第一个
+fucai,这是我写的脚本的说明，你有时间的话帮我看看在实现过程中还需要添加或删除哪些步骤
+1.删除远端集群(ceph_delete_cluster_remote.sh)
+
+功能：删除远端（备份）集群
+
+实现步骤:
+
+1.接受参数:remote leader ipaddr
+2.将所有pool remove peer(可选)
+3.删除所有节点的配置文件(remote.conf loal.conf kering....)
+4.删除集群间的ssh免密登陆
+5.kill remote端rbd-mirror进程
+
+2.创建远端备份(ceph_create_remote_backup.sh)
+
+功能:将本地的一个image备份到远端
+
+实现步骤:
+
+1.接受参数:remote leader ipaddr,pool-name,image-name
+2.判断pool是是否属于EC type(是EC则操作rbd里的image)
+3.Enable 远端与本地pool的image mode
+4.将远端与本地pool添加到peer
+5.本地Enable image feature
+6.Enable iamge Mirror
+7.Start remote rbd-mirror进程
+
+3.主从切换（image层面）(ceph_master_slave_image.sh)
+
+功能:将指定image primary status切换
+
+实现步骤:
+
+1.接受参数:remote leader ipaddr,pool-name,image-name
+2.判断pool是是否属于EC type(是EC则操作rbd里的image)
+3.判断local 和 remote的image primary
+4.如果两边都是true,是否发生脑裂(resync)
+5.切换local和remote的image primary status
+
+4.主从切换（cluster层面）(ceph_master_slave_cluster.sh)
+
+功能:将remote集群升级成一个独立的数据中心
+
+实现步骤:
+
+1.检测所有image的 primary status
+2.如果primary status为flase，则force promote
+
+./ceph_connect_cluster.sh -i 192.168.29.56(remote_id)
+
+./add_passwd_key.sh -i 192.168.29.56 -i 192.168.29.57 -i 192.168.29.58(remote_ip)
+./ceph_configrue_rbd.sh -l  -i 192.168.29.56 -i 192.168.29.57 -i 192.168.29.58(local_ip)
+./ceph_configrue_rbd.sh -r  192.168.29.56 -i 192.168.29.49 -i 192.168.29.51 -i 192.168.29.53(local_ip)
+bash ceph_start_stop_mirror.sh -on -i 192.168.29.56 -i 192.168.29.56 -i 192.168.29.56(remote_ip)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
