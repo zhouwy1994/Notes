@@ -393,6 +393,20 @@ TREE_INIT_2_S(_raw_string, const char*, int)
 TREE_NODE_ADD_NODE_2_S(_raw_string, raw_string_t,  char*, int)
 
 
+UnionStream 网络消息代码结构:
+--client 
+ --client.c //构建客户端代码
+ --client_dispather //客户端消息分发器，接收服务器回复
+--server
+ --user_options
+  --user_options_dispather.c //服务器消息分发器，只是分发来自客户端的消息请求(req)
+ --server_dispather.c //服务器消息分发器，分发来自其他服务器的请求，p2p之间的通信
+--message
+ --network 
+  --message.c //公用的消息结构定义
+  --message_process.c //定义的消息处理函数
+  
+  
 
 
 
