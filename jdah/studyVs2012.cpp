@@ -235,11 +235,11 @@ SVN是一款集中式版本控制系统，Tortoisesvn可以在本地建立一个
 在[user]下增加用户 格式 : username = password
 
 5.启动SVN服务 命令行下
-svnserver -r -d D:\repository //此种方式打开启服务窗口不会关闭，可以设置随系统启动的服务，方法如下
-系统启动
-
+svnserver -d -r "D:\repository" //此种方式打开启服务窗口不会关闭，可以设置随系统启动的服务，方法如下
+系统启动,
+此命令有一个特殊的地方,-d 与 -r的顺序不能调换，且路径要加双引号(windows server 2008)
 sc create subversion_service binpath= "C:/Program Files/Subversion/bin/svnserve.exe --service -r D:\repository" displayname= "Subversion Repository" depend= Tcpip start= auto
-
+此命令'='后都应存在一个空格等号前不可有空格
 解释：subversion_service为服务的名称。所有的系统服务可以在dos下通过命令手动启动和停止。启动：net start subversion_service 停止：net stop subversion_service
 binpath为安装subversion的路径，可执行文件的路径。
 D:\repository"为版本库的路径。

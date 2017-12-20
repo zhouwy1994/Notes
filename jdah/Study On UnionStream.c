@@ -406,12 +406,41 @@ UnionStream 网络消息代码结构:
   --message.c //公用的消息结构定义
   --message_process.c //定义的消息处理函数
   
-  
-
 acceptClient 在server_init中，建立监听套接字(block_client_t)
 
+ UnionStream 的server分为三种
+ 1.master server//负责查询整个集群的IP，负责P2P的打洞
+ 2.p2p server //p2p节点之间的通信(异步通信)
+ 3.common server(block server) //与客户端进行交互的阻塞服务器(同步通信)
+ 以上三个服务器的IP可以相同也可以不同，可以单独分离开来
 
 
+P2P结构
+ typedef struct P2P_point_t { //P2P客户端 P2P的master是少不了的(master一直不能变动 一直在线) 不然没法实现打洞 每个P2P_point_t的server就是具有候选资格的master
+							  //我们需要 并且 如果自己的server被推选成了master 虽然说此时的client和server同在一个进程中 但是为了统一化地管理 需要做的是将
+							  //其一视同仁地连接上自己的server 这样做并不会因为“共用内存”而引起很大的混乱 因为我们的master的作用仅仅是在做“转发”而已
+	auto_release_t m_auto_release; //自动释放
+	un_block_client_t* m_master_client; //必须单独存在一个客户端 该客户端是在系统启动时连接master节点的(打洞节点)
+	c2s_server_t* m_bussiness_server; //服务器 里面包含和其它端点连接的所有un_block_client 不管是自己主动连接的对方还是对方连接的自己
+	finished_func m_connected_all_func; //连接上所有的节点后的回调函数
+	dispatcher_process_func m_dispatcher_func; //事件分发函数
+	//int m_pulse_type;
+	int m_other_points_total_count; //这说的是理想状态下的端点的总数 并非真实的连接数量
+	void* m_p_attach_data;
+	//BOOL m_is_sy;
+	//BOOL m_is_master; //自己是否是master
+	int m_hole_port; //打洞端口号
+}P2P_point_t;
+
+
+如果链表中只是需要存取基本数据类型的指针，就用_value就可存取
+声明:LINK_LIST_ADD_NODE_H(_param, void*)
+存取:link_list_add_node_param_value(thread_get_p_params(pNewThread), "I am first Miner Thread");
+取出:char **content = link_list_node_get_p_data(link_list_get_head(pParam));因为链表存取的是双指针
+void link_list_add_node##name##_value(link_list_t* pLinkList, type value) { \
+	link_list_node_t* pNode = link_list_add_node##name(pLinkList); \
+	*(type*)link_list_node_get_p_data(pNode) = value; \
+}
 
 
 
