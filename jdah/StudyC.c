@@ -198,7 +198,9 @@ int a;((int**)m_buffer)[1] = &a; //这时m_buffer是一个int**所以他的元�
 vector_array_t 中就是利用这一特性来达到char*buffer装载任意类型的数据
 type* Data; ((type**)m_buffer)[1] = Data; //这时m_buffer是一个yupe**所以他的元素是type*
 
-
+头文件包含规则:
+只需遵守一个规则,那个文件需要用到头文件，就在该文件内包含，不要将头文件包含在其他头文件中，在通过引用此头文件来达到目的
+除非是common中的公用头文件
 
 
 
