@@ -209,12 +209,12 @@ extern void stream_add_int(stream_t* pStream,int nums);
 
 没有用正则表达式匹配不到的字符，自是看你的功力有多深厚
 
-
 SVN 服务器搭建
 1.Subversio和TortoiseSVN 简介
 Subversio简介：SVN服务器
 Tortoisesvn简介: SVN客户端
-SVN是一款集中式版本控制系统，Tortoisesvn可以在本地建立一个本地库，但是不能通过网络共享Subversio的功能就是将本地库共享与网络，设置用户权限等
+SVN是一款集中式版本控制系统，Tortoisesvn可以在本地建立一个本地库，但是不能通过网络共享Subversio的功能就是将本地库共享与网络，
+设置用户权限等
 
 搭建步骤:
 1.下载Subversio和TortoiseSVN尽量保持版本一致，否则会报"期望文件系统格式在“1”到“4”之间；发现格式“6”"等错误

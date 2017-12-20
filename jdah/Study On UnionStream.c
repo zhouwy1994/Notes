@@ -408,7 +408,7 @@ UnionStream 网络消息代码结构:
   
   
 
-
+acceptClient 在server_init中，建立监听套接字(block_client_t)
 
 
 
