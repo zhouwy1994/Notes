@@ -406,6 +406,8 @@ UnionStream 网络消息代码结构:
   --message.c //公用的消息结构定义
   --message_process.c //定义的消息处理函数
   
+acceptClient 在server_init中，建立监听套接字(block_client_t)
+
  UnionStream 的server分为三种
  1.master server//负责查询整个集群的IP，负责P2P的打洞
  2.p2p server //p2p节点之间的通信(异步通信)

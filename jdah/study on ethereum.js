@@ -3,6 +3,8 @@
 				Author:Zhouwy
 ====================================================================================================================================================
 
+genesis.json配置很重要,如果配置不当会出现很多莫名其妙的错误,下面的配置通过验证
+
 1.Ethereum（以太坊）是一个使开发人员能够建立和发布下一代分布式应用的公共区块链平台。 通过其专用加密货币以太币（Ether）提供去中心化
 的虚拟机（以太虚拟机”Ethereum Virtual Machine）来处理点对点合约。
 
@@ -145,7 +147,7 @@ geth --datadir ./node-03 init ./genesis.json
 注意：所有节点(实例)都是基于同一个创世块(genesis.json),且datadir一定不能相同
 
 4.启动第一个节点
-geth --datadir ./data/00 --networkid 314590 --ipcdisable --port 61910 --rpc --rpcapi 'web3,eth,net' --rpccorsdomain '*' --rpcport 8200 console
+geth --datadir ./node --minerthreads 1 --ethash.dagdir "F:\Ethash" --networkid 314590 --ipcdisable --port 61910 --rpc --rpcapi 'web3,eth,net' --rpccorsdomain '*' --rpcport 8200 console
 各参数说明如下：
 identity ：区块链的标示，随便填写，用于标示目前网络的名字
 init ：指定创世块文件的位置，并创建初始块
@@ -170,7 +172,7 @@ encode:其他节点可以根据encode加入到Peer
 可通过net.peerCount命令查看当前集群中的节点
 
 启动第二个节点(实例):
-geth --datadir ./node-02 --networkid 345001 --ipcdisable --port 61001 --rpcport 8201 --bootnodes \
+geth --datadir ./node --minerthreads 1 --ethash.dagdir "F:\Ethash" --networkid 314590 --ipcdisable --port 61910 --rpc --rpcapi 'web3,eth,net' --rpccorsdomain '*' --rpcport 8200 console --bootnodes \
 "enode://cf60b86a529f5e50310a5d54e8d73b7a5569f96d64159fc21a122554f37f64b1024c979fa72150cb3c4da4fe26f0531684f853009d942f93606f322c2a16d0b6@172.18.188.3:61000" console
 
 各参数说明如下：
