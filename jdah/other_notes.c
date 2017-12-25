@@ -376,4 +376,69 @@ notepad++多行注释快捷键ctrl + k ctrl + q 取消多行注释:ctrl + shift + k
 SSL 加密套接字协议层（一种加密的通讯协定，用在使用者与网服器之间，Security Socket Layer）
 是在套接字层的一种加密协议，公私密钥对，传输层通过公钥加密信息，使用私钥解密
 
+ssh安全配置步骤:
+安装sshd sudo apt-get install openssh-server
+启动 停止 重新启动 状态 sudo service ssh start stop restart
+无论是个人的VPS还是企业允许公网访问的服务器，如果开放22端口的SSH密码登录验证方式，被众多黑客暴力猜解捅破菊花也可能是经常发生的惨剧。
+企业可以通过防火墙来做限制，普通用户也可能借助修改22端口和强化弱口令等方式防护，但目前相对安全和简单的方案则是让SSH使用密钥登录并禁
+止口令登录。
+
+修改配置文件 sudo vim /etc/ssh/sshd_config
+#禁用密码验证
+PasswordAuthentication no
+#启用密钥验证
+RSAAuthentication yes
+PubkeyAuthentication yes
+#指定公钥数据库文件
+AuthorsizedKeysFile .ssh/authorized_keys
+
+重启ssh服务 sudo service ssh restart 为了防止配置过后不能再用密码登录，请提前配置好密钥验证登录
+修改端口 sudo vim /etc/ssh/sshd_config
+#Port
+Port = 22
+Port = 31422 //new port
+由于防火墙规则限制，新配置的端口是不能越过防火墙的，所以再没有通过新端口登录成功前，请不要删除22端口
+重启ssh服务 sudo service ssh restart 
+netstat -an | grep "LISTEN" //出现以下记录，端口监听成功
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN     
+tcp        0      0 0.0.0.0:31422           0.0.0.0:*               LISTEN     
+加入防火墙规则(ubuntu ufw 为例)
+使用方法
+1 启用
+ sudo ufw enable
+ sudo ufw default deny 
+作用：开启了防火墙并随系统启动同时关闭所有外部对本机的访问（本机访问外部正常）。
+2 关闭
+ sudo ufw disable 
+2 查看防火墙状态
+ sudo ufw status 
+3 开启/禁用相应端口或服务举例
+ sudo ufw allow 80 允许外部访问80端口
+ sudo ufw delete allow 80 禁止外部访问80 端口
+ sudo ufw allow from 192.168.1.1 允许此IP访问所有的本机端口
+ sudo ufw deny smtp 禁止外部访问smtp服务
+ sudo ufw delete allow smtp 删除上面建立的某条规则
+ sudo ufw deny proto tcp from 10.0.0.0/8 to 192.168.0.1 port 22 要拒绝所有的TCP流量从10.0.0.0/8 到192.168.0.1地址的22端口
+ 可以允许所有RFC1918网络（局域网/无线局域网的）访问这个主机（/8,/16,/12是一种网络分级）：
+sudo ufw allow from 10.0.0.0/8
+sudo ufw allow from 172.16.0.0/12
+sudo ufw allow from 192.168.0.0/16
+推荐设置
+ sudo apt-get install ufw
+ sudo ufw enable
+ sudo ufw default deny 
+这样设置已经很安全，如果有特殊需要，可以使用sudo ufw allow开启相应服务。
+注意:阿里云需要配置安全组，才能通过外部端口访问
+
+
+
+
+
+
+
+
+
+
+
+
 
