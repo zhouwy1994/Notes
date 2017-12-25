@@ -691,8 +691,10 @@ console.log(x);
 方法二
 document.getElementById("fnameId").value
 
-
-
+事件就像是回调,调用函数后可以在函数里触发事件,达到回调的效果
+ truffle-contract 中说的artifacts其实就是编译合约之后的json文件(abi)，在nodejs中可以
+ 用require()来引用
+ 
 
 
 

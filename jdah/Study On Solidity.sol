@@ -242,7 +242,7 @@ int• / uint•: 是有符号和无符号的整数，关键字uint8 到 uint256
 
 3.定点数(Fixed Point Numbers)
 可以声明但还未使用，fixed有符号定点数， ufixed无符号定点数，定点数表示方法
-fixMxN M在8~256之间，表示定点数的总长，M必须被8整除，N在0~80之间，表示小数点位数，fixed 与 ufixed 分别表示fixed256x19 和 ufixed256x19
+fixMxN M在8~256之间，表示定点数的总长，M必须被8整除，N在0~80之间，表示小数点位数，fixed 与 ufixed 分别表示fixed256x19 和 
 操作符:
 Comparisons: <=, <, ==, !=, >=, > (evaluate to bool)
 Arithmetic operators: +, -, unary -, unary +, *, /, % (remainder)
