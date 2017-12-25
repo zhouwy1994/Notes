@@ -431,6 +431,17 @@ sudo ufw allow from 192.168.0.0/16
 注意:阿里云需要配置安全组，才能通过外部端口访问
 
 
+windows安装git后会有git bash(命令行) 和 git GUI(git 界面)
+界面主要按钮:
+1.rescan(重新扫描文件变化)
+2.stage changed(添加已经变化的文件到缓存区git add)
+3.sign off(登出(logout)github 或者git服务器)
+4.commit (记得写上备注)
+5.push(上传代码到服务器)
+6.菜单栏 remote ---> fetch from 从服务器更新update
+大部分命令都集中在菜单栏
+
+
 
 
 
