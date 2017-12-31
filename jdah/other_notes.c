@@ -442,6 +442,78 @@ windows安装git后会有git bash(命令行) 和 git GUI(git 界面)
 大部分命令都集中在菜单栏
 
 
+搭建git服务器步骤：
+github为公共的git服务器,在之上搭建的服务器为分为两种，免费版和收费版，免费版为强制开源，收费版为私有仓库
+但是接下来我们搭建的服务器为liunx 下的git服务器
+环境:
+ubuntu16.04
+1.安装git
+sudo apt-get install git
+2.创建git用户(可省略)
+sudo adduser git
+3.选择一个目录作为代码库目录，进入该目录执行
+git init --bare wallet.git //创建名为wallet的代码库(裸仓库)
+4.修改仓库owner
+sudo chown R git:git wallet.git
+5.禁止通过git登录shell
+sudo vim /etc/passwd
+将git:x:1002:1002:,,,:/home/git:/bin/bash修改成git:x:1002:1002:,,,:/home/git:/usr/bin/git-shell
+这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出。
+以上步骤完成后，一个基本的代码仓库就创建完成了
+
+以下步骤可在任意一台git客户端执行
+6.克隆远程库
+git clone git@server:repository-directory/wallet.git
+以上要求输入git密码，但是处于安全考虑，一般使用公钥登录，可在/home/git/.ssh/authority中添加公钥
+
+7.这时就可以正常使用代码库了
+SVN 服务器搭建
+1.Subversio和TortoiseSVN 简介
+Subversio简介：SVN服务器
+Tortoisesvn简介: SVN客户端
+SVN是一款集中式版本控制系统，Tortoisesvn可以在本地建立一个本地库，但是不能通过网络共享Subversio的功能就是将本地库共享与网络，
+设置用户权限等
+
+搭建步骤:
+1.下载Subversio和TortoiseSVN尽量保持版本一致，否则会报"期望文件系统格式在“1”到“4”之间；发现格式“6”"等错误
+下载地址(Subversio1.6.x):http://subversion.tigris.org/servlets/ProjectDocumentList?folderID=11151&expandFolder=11151&folderID=91
+下载地址(TortoiseSVN1.6.x):http://tortoisesvn.net/downloads.html
+2.默认安装
+3.  建立仓库/版本库（Repository）
+运行Subversion服务器需要建立一个版本库（Repository），用来存放项目代码。
+1.可以右击文件夹 TortoiseSVN-->Create Repository here
+2.命令行创建 svnadmin create D:\repository (推荐:防止出现版本不匹配的错误)
+
+4.修改库的配置文件，打开新建库，D:\repository\confg文件夹，找到svnserver.conf
+ # anon-access = read
+ # auth-access = write
+ # password-db = passwd
+将上三行去处注视并置于行首(不留空格， 否则会出错)
+5。修改D:\repository\confg， 找到passwd文件
+在[user]下增加用户 格式 : username = password
+
+5.启动SVN服务 命令行下
+svnserver -d -r "D:\repository" //此种方式打开启服务窗口不会关闭，可以设置随系统启动的服务，方法如下
+系统启动,
+此命令有一个特殊的地方,-d 与 -r的顺序不能调换，且路径要加双引号(windows server 2008)
+sc create subversion_service binpath= "C:/Program Files/Subversion/bin/svnserve.exe --service -r D:\repository" displayname= "Subversion Repository" depend= Tcpip start= auto
+此命令'='后都应存在一个空格等号前不可有空格
+解释：subversion_service为服务的名称。所有的系统服务可以在dos下通过命令手动启动和停止。启动：net start subversion_service 停止：net stop subversion_service
+binpath为安装subversion的路径，可执行文件的路径。
+D:\repository"为版本库的路径。
+displayname= "Subversion Repository"为注册成的系统服务显示名称，注册成功后，可以在系统服务中找到这个名称。
+depend= Tcpip为依赖Tcpip协议。
+start= auto为注册成的系统服务启动类型为自动。
+启动成功后 在计算机--->管理---->服务中可看见Subversion Repository服务，可以自由设置
+
+6.导入工程
+右击你要导入的工程目录， TortoiseSVN--->Import,输入你的地址，一般为svn://ipaddr/repositroy
+提示输入用户名和密码，就是passwd文件所创立的配置文件，如果之前TortoiseSVN有设置帐号，需要 右击TortoiseSVN->Setting-->SaveData-->clearall
+
+7.checkout
+应注意问题:svn://127.0.0.1/ 就是你的库根文件夹，不要再加其他后缀，checkout根据你之前Import的目录格式，如果你导入时用 svn://127.0.0.1/repository/Work
+导出是也要用svn://127.0.0.1/repository/Work
+
 
 
 

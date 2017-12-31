@@ -330,6 +330,31 @@ num就是要恢复的工作编号。
 清除所有的stashed状态，
 git stash clear
 
+搭建git服务器步骤：
+github为公共的git服务器,在之上搭建的服务器为分为两种，免费版和收费版，免费版为强制开源，收费版为私有仓库
+但是接下来我们搭建的服务器为liunx 下的git服务器
+环境:
+ubuntu16.04
+1.安装git
+sudo apt-get install git
+2.创建git用户(可省略)
+sudo adduser git
+3.选择一个目录作为代码库目录，进入该目录执行
+git init --bare wallet.git //创建名为wallet的代码库(裸仓库)
+4.修改仓库owner
+sudo chown R git:git wallet.git
+5.禁止通过git登录shell
+sudo vim /etc/passwd
+将git:x:1002:1002:,,,:/home/git:/bin/bash修改成git:x:1002:1002:,,,:/home/git:/usr/bin/git-shell
+这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出。
+以上步骤完成后，一个基本的代码仓库就创建完成了
+
+以下步骤可在任意一台git客户端执行
+6.克隆远程库
+git clone git@server:repository-directory/wallet.git
+以上要求输入git密码，但是处于安全考虑，一般使用公钥登录，可在/home/git/.ssh/authority中添加公钥
+
+7.这时就可以正常使用代码库了
 
 
 
