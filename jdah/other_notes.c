@@ -534,6 +534,7 @@ Intellij IDEA安装go插件
 选择--->File---->Setings--->Plugins--->Browse Repositroy---->Mangage Repositroy--->+添加库的url
 安装从https://plugins.jetbrains.com/下载的插件
 选择--->File---->Setings--->Plugins--->Install Plugin form Disk--->选择你的插件zip格式即可
+也可以直接安装go语言版的intellj idea "Goland"
 
 
 
