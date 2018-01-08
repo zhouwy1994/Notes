@@ -448,7 +448,20 @@ type_name 为类型，expression 为表达式。
 var a = int(12.34) //a = 12
 
 
-
+在go install -v go-ethereum/cmd/...时出现需要golang的net/context文件
+以太坊建议命令go get -u -v golang.org/x/net/context安装但是国内不能翻墙，所以此命令不实用
+可以直接区golang的github下载
+git clone https://github.com/golang/net.git下载，由于限制，应该将其放到goWork/src/下
+后面又出现
+cc1.exe: sorry, unimplemented: 64-bit mode not compiled in
+这时由于go 编译依赖于gcc,windows下gcc是来自于mingw(Minimalist GNU For Windows)
+mingw有32位与64位区别，由于我之前的mingw时32位所以会出现这个错误
+重新安装mingw64
+http://sourceforge.net/projects/mingw-w64/files/latest/download?source=files
+目前主要有三种不同的线程库的定义，分别是Win32，OS/2，以及POSIX，前两种定义只适合于他们各自的平台，
+而POSIX 定义的线程库是适用于所有的计算平台的。我这里选的是threads-posix。
+http://zh.wikipedia.org/wiki/POSIX%E7%BA%BF%E7%A8%8B 
+C++ Exceptions有DWARF、SJLJ、SEH三种处理方式。对应的我们这里选择的是seh方式。
 
 
 

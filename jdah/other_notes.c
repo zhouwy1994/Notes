@@ -514,7 +514,26 @@ start= auto为注册成的系统服务启动类型为自动。
 应注意问题:svn://127.0.0.1/ 就是你的库根文件夹，不要再加其他后缀，checkout根据你之前Import的目录格式，如果你导入时用 svn://127.0.0.1/repository/Work
 导出是也要用svn://127.0.0.1/repository/Work
 
+linux 下用户配置文件在~/.profile下，配置各种变量的值，包括环境变量，alias，自定义变量等
+linux下使配置文件生效命令，source .profile or . .profile
 
+linux下将程序放入后台，有一下几种方式放入后台
+1、&
+2、ctrl + z 将程序挂起 配合bg fg使用
+以上两种方法程序是依赖当前终端，当前终端退出程序即受到SIGHUP信号而结束
+以下方法可以使终端退出而不影响后台程序
+1、nohup命令
+nohup sh test.sh &>/dev/null &
+nohup命令会忽略SIGHUP信号，从而终端退出时不会影响到后台作业
+2、将作业挂到新的会话下面
+（sh test.sh &>/dev/null &）或者将sh test.sh &>/dev/null &放到另一个脚本中运行都可以实现
+将&也放入（）后，我们会发现所提交的作业并不在作业列表中，也就是说，是无法通过jobs来查看的，
+通过ps查看发现新的作业的PPID是1而不是终端的PID，所以终端退出后不会影响我们的作业
+
+Intellij IDEA安装go插件
+选择--->File---->Setings--->Plugins--->Browse Repositroy---->Mangage Repositroy--->+添加库的url
+安装从https://plugins.jetbrains.com/下载的插件
+选择--->File---->Setings--->Plugins--->Install Plugin form Disk--->选择你的插件zip格式即可
 
 
 
