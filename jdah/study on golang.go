@@ -463,6 +463,35 @@ http://sourceforge.net/projects/mingw-w64/files/latest/download?source=files
 http://zh.wikipedia.org/wiki/POSIX%E7%BA%BF%E7%A8%8B 
 C++ Exceptions有DWARF、SJLJ、SEH三种处理方式。对应的我们这里选择的是seh方式。
 
+***************
+golang 的defer关键字常用
+golang的defer关键字，它可以在函数返回前执行一些操作，最常用的就是打开一个资源（例如一个文件、数据库连接等）时就用defer延迟关闭改资源，以免引起内存泄漏。例如：
+
+func do() (ok bool) {
+  file,_ := os.Open("c:\a.txt")
+  defer file.Close()
+  // doSomething
+  return ok
+}
+我们可以在官方的文档中看到defer的执行顺序是逆序的，也就是先进后出的顺序：
+
+for i := 0; i < 5; i++ {
+  defer fmt.Printf("%d ", i)
+}
+打印结果是：4,3,2,1,0
+那么再看这个例子：
+
+func deferRet(x,y int) (z int){
+  defer z += 100
+  z = x + y
+  return z + 50 // 执行顺序 z = z+50 -> (call defer)z = z+100 -> ret  
+}
+
+func main() {
+  i := deferRet(1,1)
+  println(i)  // print 152
+}
+我想这个例子已经能够让你明白defer的执行顺序了。
 
 
 
