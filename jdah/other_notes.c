@@ -441,6 +441,30 @@ windows安装git后会有git bash(命令行) 和 git GUI(git 界面)
 6.菜单栏 remote ---> fetch from 从服务器更新update
 大部分命令都集中在菜单栏
 
+windows 最小化当前窗口 alt + space + N
+最小化所有窗口 win + D
+
+如果两个人在同时改代码，别入提交了你修改的部分，你git pull时会有以下提示
+error: Your local changes to the following files would be overwritten by merge:
+意思为你的修改将被覆盖
+这时有两种办法，想保留自己的修改和不想保存自己的修改
+想保存自己的修改:
+git stash ---->将自己的修改放入缓存区
+git pull ----->update最新代码，这时你的代码就是服务器最新代码，但是你本地的修改之前已经提交缓存区,所以不会覆盖
+git stash pop --> 弹吃之前缓存区的代码，这时就会自动合并了  =====>>>>
+
+不想保存自己的修改:
+git --reset hard --->恢复到修改前的模样,也可以使用chechout .
+git pull
+
+ubuntu下安装特定版本软件，当不知道软件全名，可使用一下命令进行搜索
+sudo apt-cache search package
+就可出来该软件的相应版本
+当添加一个软件源的ppa时，sudo add-apt-repsitory ppa:package
+其实质是在/etc/apt/sources.d/下增加了一个该软件的sources.list文件(ppa:Personal Package Archives(个人档案包))
+
+
+
 
 
 

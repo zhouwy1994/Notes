@@ -147,7 +147,7 @@ geth --datadir ./node-03 init ./genesis.json
 注意：所有节点(实例)都是基于同一个创世块(genesis.json),且datadir一定不能相同
 
 4.启动第一个节点
-geth --datadir ./node --minerthreads 1 --ethash.dagdir "F:\Ethash" --networkid 314590 --ipcdisable --port 61910 --rpc --rpcapi 'web3,eth,net' --rpccorsdomain '*' --rpcport 8200 console
+geth --datadir ./node-01 --minerthreads 1 --ethash.dagdir "/home/zhouwy/Ethereum/Ethash" --networkid 5753542  --nodiscover --rpc --rpcapi 'web3,eth,net' --rpccorsdomain '*'  console
 各参数说明如下：
 identity ：区块链的标示，随便填写，用于标示目前网络的名字
 init ：指定创世块文件的位置，并创建初始块
