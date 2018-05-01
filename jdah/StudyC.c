@@ -236,6 +236,173 @@ SO_REUSEADDR可以用在以下四种情况下。 (摘自《Unix网络编程》�
 端口复用最常用的用途应该是防止服务器重启时之前绑定的端口还未释放或者程序突然退出而系统没有释放端口。
 ******************
 
+intptr_t类型
+
+　我接触最早的处理器是32位，目前64位处理器发展迅速。数据类型特别是int相关的类型在不同位数机器的平台下长
+度不同。C99标准并不规定具体数据类型的长度大小。
+cpu位数	char		short			int				long			指针
+ 16	 1个字节8位	  2个字节16位	 2个字节16位	 4个字节32位	2个字节16位
+ 32	 1个字节8位	  2个字节16位	 4个字节32位	 4个字节32位	4个字节32位
+ 64	 1个字节8位	  2个字节16位	 4个字节32位	 8个字节64位	8个字节64位
+为了保证平台的通用性，程序中尽量不要使用long类型。可以使用固定大小的数据类型宏定义，
+这些宏定义需要引用stdint.h头文件。
+# if __WORDSIZE == 64
+  typedef long int       　　　int64_t;
+  # else
+ __extension__
+ typedef long long int        int64_t;
+
+#if __WORDSIZE == 64
+  # ifndef __intptr_t_defined
+  typedef long int               intptr_t;
+  #  define __intptr_t_defined
+  # endif
+  typedef unsigned long int    uintptr_t;
+  #else
+  # ifndef __intptr_t_defined
+ typedef int                    intptr_t;
+ #  define __intptr_t_defined
+ # endif
+ typedef unsigned int        uintptr_t;
+ #endif
+
+ 从定义可以看出，intptr_t在不同的平台是不一样的，**始终与地址位数相同，因此用来存放地址**，即地址
+ 
+ eg:
+ stndent *stu = calloc(1, soizof(stndent));
+ intptr_t handle = (intptr_t)stu;
+ handle_student(handle);
+
+ function declaration
+ static int handle_student(intptr_t handle) {
+	 student *stu = (stndent*)(handle);
+ }
+ 
+ //第一次见到成员函数后面跟=default or =delete，解释如下
+ #define ATOMIC_FLAG_INIT	{0}
+typedef struct atomic_flag
+	{	// structure for managing flag with test-and-set semantics
+	bool test_and_set(memory_order _Order = memory_order_seq_cst)
+		volatile _NOEXCEPT;
+	bool test_and_set(memory_order _Order = memory_order_seq_cst) _NOEXCEPT;
+	void clear(memory_order _Order = memory_order_seq_cst)
+		volatile _NOEXCEPT;
+	void clear(memory_order _Order = memory_order_seq_cst) _NOEXCEPT;
+
+	_Atomic_flag_t _My_flag;
+
+	atomic_flag() _NOEXCEPT = default;
+	atomic_flag(const atomic_flag&) = delete;
+	atomic_flag& operator=(const atomic_flag&) = delete;
+	atomic_flag& operator=(const atomic_flag&) volatile = delete;
+	} atomic_flag;
+	
+ std::atomic_flag 构造函数如下：
+atomic_flag() noexcept = default;
+atomic_flag (const atomic_flag&T) = delete;
+std::atomic_flag 只有默认构造函数，拷贝构造函数已被禁用，因此不能从其他的 std::atomic_flag 对象构造一个新的 std::atomic_flag 对象。
+//std::atomic_flag对象可以当作一个简单的自旋锁(spin lock)使用。
+
+c++11新特性之atomic
+原子类型对象的主要特点就是从不同线程并发访问是良性(well-defined)行为，不会导致竞争危害。
+与之相反，不做适当控制就并发访问非原子对象则会导致未定义(undifined)行为。
+
+std::atomic<int> foo(0); atomic_flag ===== atomic<bool> atomic_flag(true);
+
+//atomic的主要方法为load(读取) store(赋值)
+其实就是一个线程安全的变量(并发访问良性)
+类似与
+EnterCriticalSection(&lock);
+foo = 4;
+LeaveCriticalSection(&lock)
+一般与atomic_flag结合使用
+
+c++关键字explicit(释义:明确的，显式的)
+要解释关键字explicit就必须要先解释c++中的显示转换和隐式转换
+class Test1 {
+	public:
+	Test1(int dat) {
+		num = dat;
+	}
+}
+
+class Test2 {
+	public:
+	explicit Test2(int dat) {
+		num = dat;
+	}
+}
+
+Test1 t1=12;//隐式调用其构造函数,成功
+Test2 t2=12;//编译错误,不能隐式调用其构造函数
+Test2 t2(12);//显式调用成功
+
+
+内存屏障 (Memory barrier)
+程序在运行时内存实际的访问顺序和程序代码编写的访问顺序不一定一致，
+这就是内存乱序访问。内存乱序访问行为出现的理由是为了提升程序运行时的性能。
+内存乱序访问主要发生在两个阶段：
+
+编译时，编译器优化导致内存乱序访问（指令重排）
+运行时，多 CPU 间交互引起内存乱序访问
+// thread 1
+while (!ok);
+do(x);
+ 
+// thread 2
+x = 42;
+ok = 1;
+此段代码中，ok 初始化为 0，线程 1 等待 ok 被设置为 1 后执行 do 函数。假如说，线程 2 对内存的写操作乱序执行，
+也就是 x 赋值后于 ok 赋值完成，那么 do 函数接受的实参就很可能出乎程序员的意料，不为 42。
+使用volatile可以避免内存优化
+判断是否是2的次方时，可用 a & (a - 1) == 0来判断,最快速高效
+
+总结：   
+reinterpret_cast 将一个类型指针转换为另一个类型指针(通常用于基本类型间指针类型转换)，
+也常将指针类型转换成intptr_t,不能转换非指针类型，也就是不能基本类型转基本类型
+const_cast    用于去除指针变量的常属性，将它转换为一个对应指针类型的普通变量，
+反过来也可以将一个非常量指针转换为一个常量指针变量,但是不能将类型转换成非指针类型(const_cast<ptr-type>(type-id))
+static_cast    用于转换基本类型和具有继承关系的类新之间转换,不太用于指针类型的之间的转换 (通常用于通用类型转换)
+dynamic_cast    只能在继承类对象的指针之间或引用之间进行类型转换  
+  
+以上只有dynamic_cast这种转换并非在编译时，而是在运行时，动态的。其它均在编译时
+
+初始化数据成员与对数据成员赋值的含义是什么？有什么区别？
+首先把数据成员按类型分类并分情况说明:
+1.内置数据类型，复合类型（指针，引用）
+    在成员初始化列表和构造函数体内进行，在性能和结果上都是一样的
+2.用户定义类型（类类型）
+    结果上相同，但是性能上存在很大的差别。因为类类型的数据成员对象在进入函数体前已经构造完成，
+	也就是说在成员初始化列表处进行构造对象的工作，调用构造函数，在进入函数体之后，进行的是对已
+	经构造好的类对象的赋值，又调用个拷贝赋值操作符才能完成（如果并未提供，则使用编译器提供的默认
+	按成员赋值行为）eg:
+class A {
+	private:
+	class B;
+	int a;
+}
+A:A() : B(123),a(4) {
+	
+}
+上述初始化列表中B的构造是显式的(B(123))，并非隐式(B = 123)
+
+
+目前大型的C++工程都是通过cmake来管理,cmake 一键可生成指定平台的工程，cmake的所有核心都
+在于CMakeLists.txt这个配置文件，只要编写好这个文件，就可一键生成MakeFile等文件，其实cake不是
+传说中那么难，如果项目中需要用到，可以好好学习一下，生成cmake项目只需两步:
+编写CMakeLists.txt
+执行cmake .
+
+还有一款也是比较流行的自动声称makefile的工具automake,(第一个公司使用过),但是配置的过程比较繁琐(需要9步)
+
+
+
+
+
+
+
+
+
 
 
 
