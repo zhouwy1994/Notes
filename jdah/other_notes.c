@@ -559,3 +559,73 @@ sudo apt-cache search package
 就可出来该软件的相应版本
 当添加一个软件源的ppa时，sudo add-apt-repsitory ppa:package
 其实质是在/etc/apt/sources.d/下增加了一个该软件的sources.list文件(ppa:Personal Package Archives(个人档案包))
+
+当使用git 操作版本库，为了安全考虑，很多公司的ssh端口并不会是22,这时操所git的命令会有相应的修改
+ssh clone ssh://git@$ip:$port/repositroy.git
+如果git服务器关闭密码认证，只能将自己的公钥上传到git服务器的authorized_keys文件内
+
+
+ubuntu 设置定时任务
+crontab -l  #查看详情
+crontab -e #设置定时任务
+
+ 
+
+*　　*　　*　　*　　*　　command 
+分　时　日　月　周　命令 
+第1列表示分钟1～59 每分钟用*或者 */1表示 
+第2列表示小时1～23（0表示0点） 
+第3列表示日期1～31 
+第4列表示月份1～12 
+第5列标识号星期0～6（0表示星期天） 
+第6列要运行的命令 
+
+ 
+
+
+例子： 
+30 21 * * * /usr/local/etc/rc.d/lighttpd restart           #每晚的21:30重启apache。 
+45 4 1,10,22 * * /usr/local/etc/rc.d/lighttpd restart   #每月1、10、22日的4 : 45重启apache。 
+10 1 * * 6,0 /usr/local/etc/rc.d/lighttpd restart          #每周六、周日的1 : 10重启apache。 
+0,30 18-23 * * * /usr/local/etc/rc.d/lighttpd restart    #每天18 : 00至23 : 00之间每隔30分钟重启apache。 
+0 23 * * 6 /usr/local/etc/rc.d/lighttpd restart              #每星期六的11 : 00 pm重启apache。 
+0 */1 * * * /usr/local/etc/rc.d/lighttpd restart               #每一小时重启apache 
+0 23-7/1 * * * /usr/local/etc/rc.d/lighttpd restart         #晚上11点到早上7点之间，每隔一小时重启apache 
+0 11 4 * mon-wed /usr/local/etc/rc.d/lighttpd restart  #每月的4号与每周一到周三的11点重启apache 
+0 4 1 jan * /usr/local/etc/rc.d/lighttpd restart               #一月一号的4点重启apache 
+
+上面命令使用crontab -e记录在定时任务里面，亲测
+如果不行排查以下原因:
+1.crontab会使用到email发送定时任务的结果。看看是否安装email
+2.不是所有的用户都用使用corntab的权限。在/etc/cron.allow下察看
+3.察看crontab的定时任务格式是否正确
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

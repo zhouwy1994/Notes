@@ -4,6 +4,7 @@
 VS2012(Microsoft Visual Studio 2012)是微软公司的一款集成开发工具，包含了Visual C++ Visual C#，Visual Basic WEB....,类似于Microsoft
 Office包含World，Excel..
 
+打开项目属性快捷键: Alt + F7
 VS2012的通用选项在 工具---->选项 ，里面包含VS的所有通用设置
 
 F12跟踪代码，Ctrl + '-' 回退
@@ -266,7 +267,53 @@ vs项目有大量代码时，通过项目管理器，新建筛选器添加代码
 项目---->显示所有文件夹-->这是可以显示你的代码目录----->右击你的代码目录---->包括在项目中（需要的添加，不需要的移除），不只是代码，库文件
 资源文件都可以添加进来
 
+8.如果工程每次都需要清理后才能编译生成,工具-选项-项目和解决方案-生成并运行-始终生成
 
+VS启动多核编译:
+1.工程属性-->“C/C++" -> ”General“ -> "Multi-processor Compilation" -> "Yes(/MP)"
+2."C/C++" -> "Code Generation" -> "Enable Minimal Rebuild" -> "No(/Gm-)"
+3.菜单栏，"Debug" -> "Options and Settings" -> "Projects and Solutions" -> "VC+ Project Settings" -> "Maximum concurrent C++ compilations" 
+设置最大C++编译并发线程数
+
+
+引入dll的方法：
+方法1：配置属性->调试->环境：输入path=包含dll文件的文件夹路径，
+
+注意是包含dll文件的文件夹的路径，而不是dll文件的路径
+
+注意path(空格)=路径、path=(空格)路径、path(空格)=(空格)路径等写法都会导致dll引用失败。
+
+方法2：将dll文件拷贝到生成的.exe所在的文件夹中
+
+方法3：配置属性->调试->工作目录：包含dll文件的文件夹路径
+
+本文转自：http://blog.csdn.net/finewind/article/details/38474731
+vs2015版本后增加了编辑并继续的功能,此功能时的在调试的过程中修改代码后编译生效，此功能的开启方式如下
+工程属性---->C/C++--->常规----->常用信息调试-->用于“编辑并继续”的程序数据库 (/ZI)
+
+
+
+vs 正则表达式匹配换行符时较为特殊
+在Visual Studio IDE 中按 Ctrl+Shift+H 打开[在文件中替换]的窗口，
+
+	/// <returns></returns>
+	List<T> GetAllData<T>(string tableName, string fieldShow, string fieldOrder, string where) where T : new();
+
+在{查找内容(N):}文本框中输入：
+
+</returns>[\s]+[^\S\r\n]+List<T>
+或者
+</returns>[\r\n]+[^\S\r\n]+List<T>
+上面来自网络,但是语法过于晦涩
+分析:
+也可用[\r\n]+\s+
+更简单\s+
+windows 后台运行程序cmd(不能是powershell) start /b program.exe 类似于Linux 下program &
+
+******
+VS很有用的一个调试技巧(某一个线程产生锁后)正常情况下是不是到死锁产生在哪，这时也无法中断
+这时候VS就有一个很棒的调试工具，---->Break All(全部中断)(Ctrl + Alt + Break)这时所有线程都会中断，这是就调出"线程"调试
+窗口,双击每一个线程查找死锁产生的原因，必要时可以打开"并行堆栈"察看对应线程之间的堆栈关系
 
 
 
