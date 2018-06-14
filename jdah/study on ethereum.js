@@ -5,6 +5,7 @@
 
 genesis.json配置很重要,如果配置不当会出现很多莫名其妙的错误,下面的配置通过验证
 
+https://www.jianshu.com/p/a5158fbfaeb9以太坊ERC20协议，代币协议（还有ERC233）通过事件来记录交易记录
 1.Ethereum（以太坊）是一个使开发人员能够建立和发布下一代分布式应用的公共区块链平台。 通过其专用加密货币以太币（Ether）提供去中心化
 的虚拟机（以太虚拟机”Ethereum Virtual Machine）来处理点对点合约。
 
