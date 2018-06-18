@@ -508,7 +508,32 @@ POW是一种最终一致性的算法，当网络中有某一台计算机挖矿�
 必须要在挖到六个块以后才能被确认(比特币),所以产生双花的几率极低，除非掌控集群51%的节点
 所有的共识算法都不能逃避51%攻击
 
+所遇C奇怪语法:
+1.const char *str = "My" "Name" "is Zhouwy"; //这语句竟然能够通过编译,输出后str为"My Name is Zhouwy"
 
+2.结构体赋值
+struct structTest {
+	int a;
+	int b;
+	int c;
+};
+
+struct structTest var = {
+	.a = 10,
+	.b = 24,
+	.c = 56
+}
+3.unix风格的数组赋值
+int arr[10] = {[4] = 67, [5] = 34}; // 可根据数组下标赋值
+
+4.可变长数组
+struct mutableArray {
+	int len;
+	char data[0];
+}
+sizeof (struct mutableArray) == 4(32bit);
+struct mutableArray *pDta = malloc(sizeof(struct mutableArray) + 1024); //这是data结构体成员指向了1024字节的内存空间
+memcpy(pDta->data, "Hello Mutable Array...", 1024);
 
 
 
