@@ -360,7 +360,7 @@ for (i < 0) {
 	...
 }
 
-无界面启动虚拟机vboxmanage stattvm --type headless
+无界面启动虚拟机vboxmanage --startvm --type headless
 查看某个服务邦定的端口信息 netstat -anp | grep $servername
 
 线程安全就是多线程访问时，采用了加锁机制，当一个线程访问该类的某个数据时，
@@ -601,6 +601,26 @@ crontab -e #设置定时任务
 3.察看crontab的定时任务格式是否正确
 
 
+//Ubuntu17后的网络设置发生了变化,ubuntu16之前的网络配置文件为/etc/network/interface
+Ubuntu17之后就是/etc/netplan
+UBuntu18.04网络配置
+静态IP:
+network:
+ethernets:
+ens33:
+addresses: [192.168.1.20/24]
+dhcp4: false
+gateway4: 192.168.1.1
+nameservers:
+addresses: [192.168.1.1]
+optional: true
+version: 2
+动态IP:
+network:
+ethernets:
+ens33:
+dhcp4: true
+version: 2
 
 
 
