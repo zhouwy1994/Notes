@@ -475,28 +475,37 @@ SVN 服务器搭建
 1.Subversio和TortoiseSVN 简介
 Subversio简介：SVN服务器
 Tortoisesvn简介: SVN客户端
-SVN是一款集中式版本控制系统，Tortoisesvn可以在本地建立一个本地库，但是不能通过网络共享Subversio的功能就是将本地库共享与网络，
+SVN是一款集中式版本控制系统，Tortoisesvn可以在本地建立一个本地库，但是不能通过网络共享, Subversio的功能就是将本地库共享与网络，
 设置用户权限等
 
-搭建步骤:
-1.下载Subversio和TortoiseSVN尽量保持版本一致，否则会报"期望文件系统格式在“1”到“4”之间；发现格式“6”"等错误
+1.搭建本地库:
+有时我们并不想将库共享，只是方便自己开发，记录提交版本等，这时就用不到Subversio功能，用Tortoisesvn就可以搭建一个本地库
+(1)创建库所在目录:mkdir F:/Repository
+(2)鼠标选中该目录--->鼠标右键---->Tortoisesvn--->Create Repository here
+(3)找到你的代码工程目录----->鼠标右键------>Tortoisesvn--->Import
+(4)在库路径中输入:file:///F:/Repository/source(注意要加前缀file:///$repPath)
+(5)可以在其它目录checkout了
+
+
+2.网络库搭建步骤:
+(1).下载Subversio和TortoiseSVN尽量保持版本一致，否则会报"期望文件系统格式在“1”到“4”之间；发现格式“6”"等错误
 下载地址(Subversio1.6.x):http://subversion.tigris.org/servlets/ProjectDocumentList?folderID=11151&expandFolder=11151&folderID=91
 下载地址(TortoiseSVN1.6.x):http://tortoisesvn.net/downloads.html
-2.默认安装
-3.  建立仓库/版本库（Repository）
+(2).默认安装
+(3).  建立仓库/版本库（Repository）
 运行Subversion服务器需要建立一个版本库（Repository），用来存放项目代码。
-1.可以右击文件夹 TortoiseSVN-->Create Repository here
-2.命令行创建 svnadmin create D:\repository (推荐:防止出现版本不匹配的错误)
+(3.1)可以右击文件夹 TortoiseSVN-->Create Repository here
+(3.2).命令行创建 svnadmin create D:\repository (推荐:防止出现版本不匹配的错误)
 
-4.修改库的配置文件，打开新建库，D:\repository\confg文件夹，找到svnserver.conf
+(4).修改库的配置文件，打开新建库，D:\repository\confg文件夹，找到svnserver.conf
  # anon-access = read
  # auth-access = write
  # password-db = passwd
 将上三行去处注视并置于行首(不留空格， 否则会出错)
-5。修改D:\repository\confg， 找到passwd文件
+(5) 修改D:\repository\confg， 找到passwd文件
 在[user]下增加用户 格式 : username = password
 
-5.启动SVN服务 命令行下
+(6).启动SVN服务 命令行下
 svnserver -d -r "D:\repository" //此种方式打开启服务窗口不会关闭，可以设置随系统启动的服务，方法如下
 系统启动,
 此命令有一个特殊的地方,-d 与 -r的顺序不能调换，且路径要加双引号(windows server 2008)

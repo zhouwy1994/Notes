@@ -48,11 +48,8 @@ cmake通常也是这个不走，只不过第一步为cmake $option
 (1)源码安装
 wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.bz2
 tar zxvf boost_1_67_0.tar.gz
-sudo ./bootstrap.sh --prefix=/usr/local/include/boost //此处目录可将其安装在gcc默认的目录下
+sudo ./bootstrap.sh --prefix=/usr/local/include/boost --with-$libname //此处目录可将其安装在gcc默认的目录下
 sudo ./b2 install
-cd ./tools/build
-sudo ./bootstrap.sh
-sudo ./b2 install --prefix=/usr/local/include/boost
 默认最小安装，可通过选项--with-$libname(atomic,chrono,thread)等选择安装
 (2)平台安装(ubuntu16)
 sudo apt-get install libboost-dev
@@ -70,25 +67,62 @@ ln -s /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib64/crt1.o
 14.在使用vs创建项目时，会设置附加包含目录，附加库目录等，不能设置成绝对路径，因为要提交到代码管理器上，别人down下来要直接编译
 vs中每个工程都有自己的环境变量，例如:ProjectDir就是当前工程路径，一切附加目录都应该使用此变量来设置
 
+15.netcat 这个工具小巧实用,确实是不可多得的工具
+https://blog.csdn.net/wangqingchuan92/article/details/79666885
+netcat -l $ip:$port 监听端口
+netcat $ip $port 连接
+netcat  -v $ip $port 检测某个端口是否开放
+netcat -l port < file 发送文件	netcat -n server_ip port > file 接受文件(很有用)
+cat video.avi | netcat -l port 视频传输		netcat server_ip port | mplayer -vo x11 -cache 3000 -  视频读取
+
+16.tcpdump抓包工具是linux下的抓包工具，比较实用，如果要监听哪个端口是否有数据出来或除去，查看抓取内容等
+监听本地回环(本机到本机)
+tcpdump -i lo
+监听指定主机
+tcpdump host $ip
+监听指定端口(-X)查看包内容
+sudo tcpdump -X tcp port 12345
+https://www.cnblogs.com/maifengqiang/p/3863168.html
+
+17.wireshark是一款非常好用的可视化抓包工具,打开wireshark选择capture---->start即可开始抓包，可以根据过滤规则进行过滤
+https://blog.csdn.net/wojiaopanpan/article/details/69944970
+
+17.登陆linux后清除登陆记录(last lastb(失败记录))
+echo /dev/null > /var/log/wtmp
+echo /dev/null > /var/log/btmp
+清除历史命令 history -c or echo /dev/null > ./.bash_history
+admin hk123456 248
 
 
+18.linux下查看c++库(so,a)等是多少位的 用file *.so
+
+19.git clone http方式出现认证失败但又没有弹出输入任何提示输入用户名密码的情况下,就是说之前你的电脑保存有凭据,但可能凭据已经过期,这时需
+要清除之前保存的凭据win:控制面板----->用户帐户-------->凭据管理器-------->普通凭据---->找到你之前的git地址，删除----->ok
+
+20.windows创建服务命令:sc
+(1)创建服务 sc create $ServiceName	binPath= (此处有空格)"exe路径" start= "启动方式"
+(2)启动服务 sc start $ServiceName
+(3)停止服务 sc stop $ServiceName
+(4)删除服务 sc delete $ServiceName
 
 
+21.nmap 一款不错的局域网(广域网也行)的ip+port稍描工具，用于局域网类的设备查找很方便,有linux和windows版
+nbtscan也不错命令行工具(但是好像不能稍描端口 nc -v port可以但是不可以设定范围)
 
 
+22.svn创建分支教程,不错(https://www.cnblogs.com/firstdream/p/5632296.html),一般在创建一个svn工程时，都要建立三个文件夹
+branches 用于新建分支
+tags	 用于建立标签(只读)一般用于阶段性版本发布
+trunk	 主干，主分支
+版本号:主版本号 . 子版本号 [. 修正版本号 [. 编译版本号 ](https://baike.baidu.com/item/%E8%BD%AF%E4%BB%B6%E7%89%88%E6%9C%AC%E5%8F%B7/188753?fr=aladdin)
 
 
+23。linux下查看.so或.a导出函数时用命令nm,windows下用vs工具dumpbin查看dll或lib的导出函数
 
+24.VS下建立Linux跨平台项目，在项目属性--->配置属性----->常规----->项目默认值------>配置类型，可以选择你要生成文件的类型，害我之前为
+了生成Linux动态库而去修改编译选项(汗),什么都还是应该去看官方文档而不应该盲目去百度
 
-
-
-
-
-
-
-
-
-
+25.Linux项目设置共享库搜索路径，可以将搜索路径设置到当前目录，那只需要将动态库与.out在同一目录就可执行
 
 
 
