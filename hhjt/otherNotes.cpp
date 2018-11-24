@@ -149,6 +149,6 @@ trunk	 主干，主分支
 6.如果想允许所有的客户端都能访问，就加入htto_access allow all
 7.注释掉http_access deny all这一句(默认不允许任何客户端接入)
 8.sudo systemctl restart squid.service
-9.sudo netstat -nlt 查看是否监听成功
+9.sudo netstat -nlt 查看是否监听成功（可以在百度中输入ip138查看是否设置成功）
 10.设置浏览器代理
 
