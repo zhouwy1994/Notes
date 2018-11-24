@@ -67,6 +67,7 @@ ln -s /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib64/crt1.o
 14.在使用vs创建项目时，会设置附加包含目录，附加库目录等，不能设置成绝对路径，因为要提交到代码管理器上，别人down下来要直接编译
 vs中每个工程都有自己的环境变量，例如:ProjectDir就是当前工程路径，一切附加目录都应该使用此变量来设置
 
+<<<<<<< Updated upstream
 15.netcat 这个工具小巧实用,确实是不可多得的工具
 https://blog.csdn.net/wangqingchuan92/article/details/79666885
 netcat -l $ip:$port 监听端口
@@ -105,6 +106,21 @@ admin hk123456 248
 (3)停止服务 sc stop $ServiceName
 (4)删除服务 sc delete $ServiceName
 
+21.msvc 的命令行编译器，编译器:cl.exe 连接器:link.exe
+cl /c -I"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Include" basic_main.cpp(编译)
+link "VC\lib\libcpmt.lib" "VC\lib\libcmt.lib"  basic_main.obj(链接)
+-- 编译和连接同时进行
+cl /FA
+也可以将头文件目录包含至坏境变量<INCLUDE>中没有则创建库目录<LIB>
+tcpdump **默认抓取第一张网卡的数据**，如果服务监听到回环网卡端口8888上，以下命令是抓取不到数据的
+sudo tcpdump tcp port 8888
+sudo tpdump tcp port 8888 host 192.168.3.111（eth0）
+sudo tcpdump tcp port 8888 -i eth0
+必须用以下命令
+sudo tcpdump tcp port 8888 -i lo
+或者 sudo tcpdump tcp port 8888 host 127.0.0.1
+https://blog.csdn.net/tomorrow_is_better/article/details/77894305
+
 
 21.nmap 一款不错的局域网(广域网也行)的ip+port稍描工具，用于局域网类的设备查找很方便,有linux和windows版
 nbtscan也不错命令行工具(但是好像不能稍描端口 nc -v port可以但是不可以设定范围)
@@ -124,6 +140,15 @@ trunk	 主干，主分支
 
 25.Linux项目设置共享库搜索路径，可以将搜索路径设置到当前目录，那只需要将动态库与.out在同一目录就可执行
 
-
-
+26.利用squid搭建代理服务器搭建,阿里云服务器ubuntu16.04(https://www.cnblogs.com/zhaopengcheng/p/6059267.html)
+1.sudo apt-get install squid
+2.sudo vim /etc/squid/squid.conf
+3.http_port 3128修改代理服务器端口，注意阿里云的防火墙
+4. acl CONNECT method ...行下加入 acl myhome src 171.213.12.0/255.0.0.0(外网ip ip138) /*此步骤可以省略，只不过是设置一个变量值*/
+5. http_access allow localhost行下面加入http_access allow myhome(上一步的变量值)
+6.如果想允许所有的客户端都能访问，就加入htto_access allow all
+7.注释掉http_access deny all这一句(默认不允许任何客户端接入)
+8.sudo systemctl restart squid.service
+9.sudo netstat -nlt 查看是否监听成功
+10.设置浏览器代理
 

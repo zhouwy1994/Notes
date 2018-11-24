@@ -57,6 +57,7 @@ g++ source.cpp `pkg-config --cflags --libs opencv`
 
 9.Visual Studio跨平台编译可在项目属性------>链接器----->附加依赖项 添加一些gcc\g++所需要的编译选项
 
+<<<<<<< Updated upstream
 
 10.编译boost库，由于boost跨平台，linux和windows编译过程相同
 下载boost库
@@ -229,6 +230,26 @@ namespace NS {
 
 43.typename 还有一个功能，在模板编程中引用T内部的类型,using ValueType = typename T::value_type;
 
+44.分布式消息队列:分布式节点间保证消息的可靠性(不丢失)、有序性(FIFO)、持久化(宕机后可用)、多对多(n*m)
+应该学习的两种消息队列:kafka(Broker)、zmq(Brokerless)
+消息队列的分类:Broker(消息队列就是一个第三方服务)、Brokerless(API方式调用)
+1.Broker类的分布式消息队列，是指有独立部署进行的分布式服务，即发送者把消息发布到Broker进程，再由Broker进程推（或者是拉）给订阅者。
+2.Brokerless类的消息队列，主要采用api的方式，编译到应用程序中，在应用程序间进行点对点的通信。
+https://blog.csdn.net/mysunshinexia01/article/details/80871696（zmq学习指南）
+45.协程:协程所产生的并发为伪并发，所有的协程执行过程都在一个线程之内(通常是主线程)，所有协程之间的切换都处在用户
+空间内（线程间的切换发生在内核空间），协程的底层切换可以理解成c中的setjemp和longjemp，用户空间切换代价小、由于都是
+在一个线程内，所有资源不用加锁
+
+46.c++中有wchar_t常常被我们忽略，wchar_t类型的常量通常用L前缀来标识
+wchar_t ch = L'e';
+wchar_t *pData = L"Hello Wworld";
+c++原生字符串(不用任何转义)(const char *pData = R"(dsadsadsadsadsa)");
+
+47.对异步事件服务器模型的理解
+asio 一定要有有一个上下文(context),其实这就是一个事件循环，由多个线程共同运行 boost::thread(boost::asio::io_context::run)
+然后之后所有的套接字都基于这个上下文建立，向这个套接字注册回调函数，只要这个套接字上发生事件，就会回调函数，达到异步
+同信的效果，但是套接字的数据处理环节不能耗时太久，否者会减少活跃的线程数量，如果套接字的数据处理会耗时太久,则需要每个
+套接字分配一个线程，或者专门分配几个线程处理数据
 
 
 
