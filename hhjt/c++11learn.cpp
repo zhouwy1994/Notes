@@ -45,7 +45,7 @@ auto lambda = [](int a, int b)->int {
 typedef int(*funcPtr)(int, int);
 funcPtr ptr = lambda;
 或直接
-funcPtr ptr = ](int a, int b)->int {
+funcPtr ptr = [](int a, int b)->int {
 	return a + b;
 }
 lambda表达式很适合用作函数回调参数
@@ -100,6 +100,7 @@ public:
     }
 };
 
+15.1类的静态成员函数可以访问所有类的静态成员变量而不需要this指针，就和const的类成员函数只能访问const成员函数是一个道理
 16.c/c++中的预处理指令#pragma,适当运用是把利器
 #pragma once //防止当前文件被多次包含
 #pragma pack(n) //结构体排列以n字节对其，对于协议结构体很有用
@@ -250,6 +251,121 @@ asio 一定要有有一个上下文(context),其实这就是一个事件循环�
 然后之后所有的套接字都基于这个上下文建立，向这个套接字注册回调函数，只要这个套接字上发生事件，就会回调函数，达到异步
 同信的效果，但是套接字的数据处理环节不能耗时太久，否者会减少活跃的线程数量，如果套接字的数据处理会耗时太久,则需要每个
 套接字分配一个线程，或者专门分配几个线程处理数据
+
+47.同一项目想的不同子模块应该放在一个解决方案下，共用一份源代码,省得源代码修改后全部子模块更新,这样也使得项目更容易管理
+
+48.rpc(远程过程调用),其实就是一种进程间的通信方式,就是A进程调用B进程的函数,想过就像是调用本进程其他函数一样,rpc就是要屏蔽
+底层的进程间通信协议，使用户不关心通信，只关心函数调用结果
+
+49.rpc只是一种名词定义，并不是一个协议,具体的实现有很多第三方库，rpc尤其在分布式架构中频繁使用，可以好好学习一下
+
+50.lockfree(无锁)操作，是一种不需要锁即可实现线程安全的数据操作，它的实现是就CAS(compare and set or compare and swap),现在很多处理器
+架构都有相应的汇编指令实现,代码层c++又有相应的库automic系列,但是CAS又要防止ABA问题
+gcc的CAS操作函数
+bool__sync_bool_compare_and_swap (type *ptr, type oldval type newval, ...)
+type __sync_val_compare_and_swap (type *ptr, type oldval type newval, ...)
+Windows:
+InterlockedCompareExchange ( __inoutLONGvolatile*Target,
+                                __inLONGExchange,
+                                __inLONGComperand);
+c++11:
+template<classT >
+bool atomic_compare_exchange_weak( std::atomic* obj,
+                                   T* expected, T desired );
+template<classT >
+bool atomic_compare_exchange_weak(volatilestd::atomic* obj,
+T* expected, T desired );
+
+
+51.bind函数绑定的参数默认是值传递，如果需要应用传递请在参数前加上std::ref修饰符
+int func(int a, int b&, int c);
+std::bind(func, a, std::ref(b), c);
+std::ref 何 std::move相似
+
+52.c/c++中的整形溢出问题
+溢出类型一:
+char varc = 123 + 12345;
+溢出类型二:
+uint32_t vara = 12340;
+uint64_t varb = 1024 * 1024 * vara;
+varb正常的运行结果应该是12939427840,但是程序运行的结果为54525952可以看书已经发生了整形溢出，本来
+我以为uint64_t是能够容纳12939427840，就不会溢出，但是理解错了，在运算时的结果字面值已经发生了溢出
+如果改成uint64_t varb = (uint64_t)(1024 * 1024 * vara); 结果还是54525952
+如果改成uint64_t varb = 1024 * 1024 * (uint64_t)vara; 结果就对了
+为什么、就是在字面值运算时已经溢出，我想应该时运算时最终结果转换为参与运算元素中最长元素的类型
+
+53.字符串数字互转,以后尽量使用string中的stoi to_string函数来替换string.h中的atoi itoa等
+
+54.c++中当库里面的函数与当前工程源文件里面重名(命名空间也相同)，如果链接的库是动态库,那同名的库函数中的同名函数会优先连接工程目录下的源文件
+如果是静态库，则链接失败,编译器不知道要链接哪个函数
+
+55.遇见一个有趣的问题，在写daemon或服务器程序时，一般在main函数之前注册信号(signal),然后再服务初始化完成后getchar()让main函数所在线程睡眠,
+把cou让出来,后续清理资源,但是退出程序的方法就是输入一个字符,但是daemon时无法接受输入的,这时用signal来注册信号就不太妥当,应该使用linux系统库函数sigactive函数
+来注册信号,此函数注册的信号处理函在接受到信号时可让线程从睡眠状态转变为可运行状态,跳过getchar()，来清理函数
+
+56.使用c++11的变量初始化方式赋值，bool isSuccess{initNetworkSDK()},这样{}在函数参数较多时可以起到格式化作用,所以以后编程尽量用{}赋值
+
+
+57.c++中的namespace有一个特殊的作用，提供单独的作用域，它类似于静态全局声明的使用，可以使用未命名的namespace定义来实现
+namespace {
+    int count; // 等价与static int count;
+}
+
+func (int i) {count = i}
+
+58.多线程编程中,为了使多核cpu发挥最大效率,通常会将线程均匀分布在cpu的每个core上,而且各种平台都提供了这类接口
+#ifdef _WINDOWS
+	const Int32 tempThreadAffinityMask{ 0x01 << mask };
+	status = static_cast<Int32>(SetThreadAffinityMask(tid, tempThreadAffinityMask));
+#else
+	cpu_set_t tempCpuSet;
+	CPU_ZERO(&tempCpuSet);
+	CPU_SET(mask, &tempCpuSet);
+	status = pthread_setaffinity_np(tid, sizeof(cpu_set_t), &tempCpuSet);
+#endif//_WINDOWS
+
+59.内存屏障(memory barrier),编译器在编译代码时会存在代码优化，指令重排(-O2 -O3),优化的目的在于提升程序运行时的性能，
+但有时这种优化会导致内存乱序访问, 内存乱序访问主要发生在两个阶段并:
+1.编译时，编译器优化导致内存乱序访问（指令重排）
+2.运行时，多core CPU间交互引起内存乱序访问
+什么是内存访问乱序? int x, y, r; void f(){x = r;y = 1;} 加上-O2优化后的汇编代码movl r(%rip), %eax movl $1, y(%rip) movl %eax, x(%rip
+明显发生了乱序,这时候就需要使用到memory barrier来限制(或者使用volatile关键字来优化,但是volatile只能解决编译时内存乱序访问,而不能解决
+运行时内存访问乱序),memory barrier的主要作用为:
+code1;
+#define barrier() __asm__ __volatile__("" ::: "memory")
+code2
+***内存屏障保证在执行code2时,code1已经执行完毕***
+Memory Barrier 常用场合包括：
+1.实现同步原语（synchronization primitives）
+2.实现无锁数据结构（lock-free data structures）
+3.驱动程序
+
+
+60.当进行数学运算时,如果能用位运算代替，尽量使用位运算,如果参与计算的一方为2^n，那一定会有办法进行位运算
+
+61.bloom过滤器,由于快速查找某个键值(key)是否存在与filter(过滤器)中，布朗过滤器就是一个bitset，通过把key(hash)加上步长规则
+映射到过滤器上，查找时再通过相同的规则映射，如果结果不匹配,那一定不在过滤器上,如果结果匹配不一定在过滤器上，因为映射可能
+会出现碰撞,可以通过增加bit_pre_key，每个(key)所包含的bit数，或者复杂的步长计算规则减少碰撞记录，但是同时也要考虑空间利用率
+具体例子参考leveldb util/bloom_filter.cc
+
+62.Policy(策略)设计模式
+
+63. boost的enable_shared_for_this这个工具很有用,应用场景:需要将this作为回调函数的userdata(context),但是一般要用boost::bind绑定
+可以防止在this被释放(其实不是释放，在其他地方使用this一定要使用shared_ptr，不然释放this后还是会内存错误)后继续使用
+
+64.forward_list，前向列表(单向列表),每个node只有一个next指针，所以它的迭代器都是forward_iterator,只能支持++操作，不能--，他又before_begin可以获取head的前面位置
+
+65.以后再项目代码中遇见错误，在各种codereview都没有找到bug(或编译错误)所在,那就用终极办法，屏蔽(注释)所以可能出现错误的位置，尽可能的让代码运行起来，然后再一个个慢慢解注释，
+定位出错位置
+
+64。编译遇见一个错误，硬是搞了一天.boost::function<int(int, int)> func;我直接给在初始化列表中赋值nullptr，然后报错硬是看不懂，赋值0又编译通过了
+我想func压根就是一个函数对象，不是一个指针,所以不能够直接nullptr，为什么0又行呢，我想时因为std::function 与整数存在implicit convert(隐式转换)
+
+65.造成64的编译错误还有一种可能会导致，就是实参与形参函数返回值、函数参数个数类型对不上，也会赋值不成功，编译时错误
+
+
+
+
 
 
 
