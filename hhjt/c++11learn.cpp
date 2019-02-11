@@ -363,12 +363,55 @@ Memory Barrier 常用场合包括：
 
 65.造成64的编译错误还有一种可能会导致，就是实参与形参函数返回值、函数参数个数类型对不上，也会赋值不成功，编译时错误
 
+66.一直不知道thread detach的作用,只知道是线程分离的意思,当启动一个线程后,当线程退出时并没有join在等待,那程序就会抛出terminate called without an active exception
+所以当线程执行完成后一定要调用join等待,最好调用joinable判断,不然对一个thread对象两次join也会抛出异常,join就是在回收线程资源,有没有办法不用调用join去释放线程,那就是
+detach,当调用detach后，等于把资源管理权限交给了线程，由它自生自灭,线程执行完成时操作系统会自动回收资源，但不管是join还是detach，当main线程退出时,全部线程将被回收
 
+67.shared_ptr存在相互引用而最终不能释放导致内存泄漏的问题,请看例子
+class TestA {                                   class TestB {
+    public:                                      public:
+    func1(shared_ptr<TestB> ptrB) {              func1(shared_ptr<TestA> ptrA) {
+        m_ptrB = ptrB;                              m_ptrA = ptrA;
+    }                                             }
+   private:                                      private:
+   shared_ptr<TestB> m_ptrB;                        shared_ptr<TestA> m_ptrA;
+}                                                 }
+    
+std::shared_ptr<TestA> ptr_a = std::make_shared<TestA>();
+std::shared_ptr<TestB> ptr_b = std::make_shared<TestB>();
+ptr_a->func1(ptr_b);
+ptr_b->func1(ptr_a);
+最终导致的结果是TestA和TestB都不能被释放,
+ptr_a对ptr_b说，哎，我说ptr_b，我现在的条件是，你先释放我，我才能释放你，这是天生的，造物者决定的，改不了。
+ptr_b也对ptr_a说，我的条件也是一样，你先释放我，我才能释放你，怎么办？
+是吧，大家都没错，相互引用导致的问题就是释放条件的冲突，最终也可能导致内存泄漏。
+解决这个问题的方法就是使用weak_ptr作为成员变量,因为对eark_ptr的赋值不会引起引用计数增加
 
-
-
-
-
+ 
+ 68.std::move和std::forward,有一点值得注意,经过两者操作过的变量,并没有产生1Byte的代码,他们就是一个type_cast,move将左值cast成右值
+ 右值引用类型是独立于值的，一个右值引用参数作为函数的形参，在函数内部再转发该参数的时候它已经变成一个左值，并不是他原来的类型。
+ 如果我们需要一种方法能够按照参数原来的类型转发到另一个函数，这种转发类型称为完美转发。
+ template<typename T>
+void print(T& t){
+    cout << "lvalue" << endl;
+}
+template<typename T>
+void print(T&& t){
+    cout << "rvalue" << endl;
+}
+ 
+template<typename T>
+void TestForward(T && v){
+    print(v);
+    print(std::forward<T>(v));
+    print(std::move(v));
+}
+ 
+69.在现代软件开发中，常常使用url方式访问资源,其实url访问就是遵照http协议的TCP连接,只不过是java、php对url的访问方式支持较好,
+不像c++这总底层语言,在收到url是还需要去解析url的后缀,其实之前我一直把url访问看的很复杂,其实url经过dns解析之后就是一个ip地址，
+通过url访问等价于TCP连接，在收到url之后只要解析url后缀即可知道url需要访问的内容:https://baike.baidu.com/item/fd84/453974?fr=aladdin
+https://baike.baidu.com就是url前缀经过DNS解析后就是一个ip地址,item/fd84/453974 就是一个资源后缀，网站后台通过url后缀去判断你要访问
+的资源,fr=aladdin是get参数，就是你向资源传送的参数
 
 
 

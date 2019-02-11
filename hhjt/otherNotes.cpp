@@ -185,7 +185,18 @@ sudo zpt-get install lrzsz
 37.可以从redis看集群的主从备份，一个集群中一台master多台salve，主从结构是高可用，数据读写分离的基础，salve启动后配置maste地址信息，savle自动去
 备份
 
-
+VS项目默认环境变量名	含义
+$(SolutionDir)	        解决方案目录：即.sln文件所在路径
+$(ProjectDir)	        项目根目录:, 即.vcxproj文件所在路径
+$(Configuration)        当前的编译配置名称，比如Debug，或Release
+$(ProjectName)	        当前项目名称
+$(SolutionName)	        解决方案名称
+$(OutDir)	            项目输出文件目录
+$(TargetDir)	        项目输出文件目录
+$(TargetName)	        项目生成目标文件, 通常和$(ProjectName)同名, 如Game
+$(TargetExt)	        项目生成文件后缀名，如.exe, .lib具体取决于工程设置
+$(TargetFileName)	    项目输出文件名字。比如Game.exe, 等于 (TargetExt)
+$(ProjectExt)	        工程文件后缀名，如.vcxproj
 
 
 
