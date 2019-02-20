@@ -413,7 +413,10 @@ void TestForward(T && v){
 https://baike.baidu.com就是url前缀经过DNS解析后就是一个ip地址,item/fd84/453974 就是一个资源后缀，网站后台通过url后缀去判断你要访问
 的资源,fr=aladdin是get参数，就是你向资源传送的参数
 
-
+70.今天遇见一个坑,调用ffmpeg库的时候在所有工程配置都正确的情况下:无法解析的外部符号 "void * __cdecl av_malloc(unsigned __int64)
+这明显就是没有链接到lib文件,可是我的工程配置都没问题,百度一下才知道原来ffmpeg的库全是用c的方式编译的,我的工程是cpp工程,由于没有在
+ffmpeg相应头文件中添加extern "C"标志,导致工程不能正确的链接到lib文件,所有谨记以下定理:
+使用在C++中调用C语言编写的动态(包括静态)链接库时,要在DLL或lib所对应的头文件中添加extern "C"
 
 
 
