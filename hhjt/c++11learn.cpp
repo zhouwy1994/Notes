@@ -252,9 +252,27 @@ asio 一定要有有一个上下文(context),其实这就是一个事件循环�
 套接字分配一个线程，或者专门分配几个线程处理数据
 
 
+49.是时候好好梳理一下linux下gcc的头文件、静态库、动态库默认搜索路径
+头文件:优先搜索 -I路径---->C_INCLUDE_PATH，CPLUS_INCLUDE_PATH，OBJC_INCLUDE_PATH环境变量路径----->/usr/include /usr/local/include--->/usr/include/c++/4.8.5
+静态库(链接时) -L路径----->LIBRARY_PATH环境变量路径----->/lib /lib64 /usr/kib .usr/lib64 /usr/local/lib /usr/local/lib64
+动态库(运行时) -Wl,rpath路径---->LD_LIBRARY_PATH环境变量路径---->/etc/ld.so.conf中指定的路径--->/lib /lib64 /usr/kib .usr/lib64 /usr/local/lib /usr/local/lib64
+应该注意的问题:
+1.设置环境变量时格式,export C_INCLUDE_PATH=$C_INCLUDE_PATH:$newPath(全局 /etc/profile 当前用户~/.bashrc)修改完成后记得 source 生效
+2.LIBRARY_PATH 和 LD_LIBRARY_PATH的区别
+LIBRARY_PATH:程序**编译期间**查找动态链接库时指定查找共享库的路径
+LD_LIBRARY_PATH:程序**运行期间**查找动态链接库时指定除了系统默认路径(/usr/lib)之外的路径
+3.很多库目录或者库文件都、头文目录是软连接,所以如果头文件目录过大，可以创建软连接搜索路径下
+4.-L只是指定编译连接时库目录，并不能指定运行时库目录(-Wl,rpath指定)
 
+51.ratio(n. 比率，比例)之前还以为是什么高深的数据结构,其实就是一个分数的数据结构,在头文件ratio中,该头文件里
+还包含一些与分数运算(加减乘除)与比较(大于等于小于)相关的函数
+ratio被很多c++标准库运用,比如std::chrono::milliseconds其实质就是 ratio<1,1000> 1/1000秒
+template <intmax_t N, intmax_t D = 1> class ratio; N分子 D分母
 
+52.sprintf snprintf库函数有一个返回值(size_t),含义是写入buf的字符实际长度,为了防止越界,应该使用snprintf，
+虽然此函数不会访问越界，但有时实际写入长度大于buf长度时不时我们想要的结果，这是就需要对snprintf的返回值进行判断
 
-
+53.c++可以获取更高精度的时间戳，之前一直都没好好看懂chrono，clock,duration,time_point,tick,epoch,ratio
+duration.count()
 
 
