@@ -178,7 +178,7 @@ GoogleTest:简称gtest,是google针对c/c++的一个UnitTest工具，其对Windows，Linux，Ma
 make:针对Unix/Linux平台的测试库，进入目录make命令生成静态库.a文件，便于之后测试编译引用
 msvc:主要针对Windows平台的VistualC++
 xcode:主要针对Mac平台的Xcode
-codegear:Borland C ++ Builder和自动工具脚本（不推荐使用）另一种C++平台
+codegear:Borland C++ Builder和自动工具脚本（不推荐使用）另一种C++平台
 CMakeLists.txt：Google Test根目录中的CMake（推荐）。
 include:gtest的头文件目录（重要）
 src:单元测试所需要的源文件（重要）
@@ -187,7 +187,7 @@ samples:gtest给出的几个测试用例样本samples~sample10
 
 
 
-一下是make/Makefile文件的内容，从以下内容可大概分析出gtest的使用以及其运行原理:
+以下是make/Makefile文件的内容，从以下内容可大概分析出gtest的使用以及其运行原理:
 # A sample Makefile for building Google Test and using it in user
 # tests.  Please tweak it to suit your environment and project.  You
 # may want to move it to your project's root directory.
