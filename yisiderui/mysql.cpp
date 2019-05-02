@@ -19,7 +19,7 @@ Enter password:
     默认情况下，mysql帐号不允许从远程登陆，只能在localhost登录。本文提供了二种方法设置mysql可以通过远程主机进行连接。
 一、改表法
     在localhost登入mysql后，更改 "mysql" 数据库里的 "user" 表里的 "host" 项，将"localhost"改称"%"
-
+注意防火墙（阿里云还有一道防火墙）
 例如：
 　　#mysql -u root -p
    Enter password:

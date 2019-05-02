@@ -631,7 +631,9 @@ ens33:
 dhcp4: true
 version: 2
 
-
+Linux 的启动脚本在系统启动时会加载，添加环境变量时如果使用命令添加命令export PATH=$PATH:路径
+通过命令设置的环境变量只可以在Shell使用(当前进程)，如果想每一个进程都能使用，修改etc/pro*配置文件
+或~/.bashrc 配置好之后，测试source ~/.bashrc
 
 
 
