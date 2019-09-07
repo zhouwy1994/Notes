@@ -1,5 +1,6 @@
 1.Gcc编译c/c++代码时,默认是动态链接库，如果想静态链接，可加选项-Wl,-Bstatic改选项后跟要静态链接的库，但是::最后要恢复动态链接方式
--Wl,-Bdynamic，不然后面全用静态链接方式，而有的库是没有静态库的，所以将链接失败
+-Wl,-Bdynamic，不然后面全用静态链接方式，*有的静态库本身就依赖有其他动态库,pthread,dl等，如果采用-Wl,-Bstatic方式会有报错,这时需要将静态库所依赖的动态库放在-Wl,-Bdynamic后*
+静态链接stdc++，使用选项-static-libstdc++
 2.所以linux的64位系统都会有一个lib64目录，任何linux系统都会有lib目录，其实lib64和lib目录里面的东西大部分是一样的（例如lib64和lib中都会有libc.so.6），只是lib64里都是64位库，供64位
 程序动态链接，而lib里面的库是32位程序链接的库
 linux系统的/lib -> usr/lib（软连接）lib64 -> usr/lib64（软连接）bin -> usr/bin（软连接) sbin -> usr/sbin（软连接）
@@ -21,6 +22,8 @@ linux系统的/lib -> usr/lib（软连接）lib64 -> usr/lib64（软连接）bin -> usr/bin（
 (5)$remoteInstallRoot(远程安装目录，存放编译之后的可执行文件,应该是与installRoot对应，做了一个拷贝)
 (6)其他值使用默认
 (7)如果cmake中有多个生成对象（选择启动项）即可编译调试
+
+(8)右击CMakeLists.txt,"调试和启动设置"，选择需要的启动项，就会弹出对应程序的launch.vs.json，里面可以甚至调试选项,args,程序启动参数
 
 8.分布式之间的时间同步需采用ntpserver方式
 
@@ -108,11 +111,161 @@ PRINT("%s:%d", argv[0], argc);
 
 20.std::string convert to c++ base type function std::stoi std::stoll...
 
+21.c++11允许用户自定义字面值,方法如下
+std::chrono::seconds operator"" _S(unsigned long long n) {
+	return std::chrono::seconds(n);
+}
+然后就可以使用
+std::this_thread::sleep_for(1_S); // c++标准规定,用户自定义字面值必须带下划线_,不带下划线的只允许c++标准使用，而c++14已经有了s，ms等字面值
+
+22.gdb 调试程序时制定程序参数 gdb --args a.out arg1 arg2 ...
+
+23.boost里面有一个智能指针,intrusive_ptr<T>(入侵指针)，其实就是自定义智能指针辅助类，需要实现两个回调函数intrusive_ptr_add_ref(T*)，增加引用
+计数，intrusive_ptr_release(T*) //减小引用计数，用户可以在此回调函数中做相应操作，比如当引用计数减为0时，做相应操作，intrusive_ptr构造和析构时会
+回调这两个回调函数
+
+23.c++中2进制转16进制，简单实现版
+std::string bin_to_hexstr(uint8_t *bin, std::size length) {
+	std::stringstream ss;
+	std::for_each(bin, bin + length, [&ss](uint8_t ch) {
+		ss.fill('0'); // 不足部分用0填充
+		ss.width(2); // 设置宽度为2
+		ss << static_cast<uint32_t>(ch);
+	});
+	
+	return ss.str();
+}
 
 
+24.c++中大部分容器的成员函数都会返回迭代器(iterator)类型(继承与标准的iterator)，iterator并不是一个针对不同容器的特点类型，而是一个标准的迭代器类型，
+iterator存在于头文件<iterator>,这就是为什么只要是迭代器类型都适合于algorithm中的所有算法，for(auto)方法
+
+25.可以自定义迭代器，继承标准的iterator，地带其类型又分为输入输出迭代器，前置后置迭代器等，每一种迭代器有不同的访问方式
+
+26.STL中resize和reserve的区别,resize和容器的size相关，reserve与容器的capacity相关
+resize(n):不管n是大于size()还是小于size()，最终size() == n，多出的会被销毁，不够的按初始化值补全，或者可以通过resize(n, value)以value填充
+reserve(n):如果n > size()那会再增加n-size()个capacity,但不会初始化，如果n < size()不做任何处理
+
+27.STL中的容器分为三大类:顺序性容器、关联式容器，容器适配器
+顺序性容器:是一种各元素之间有顺序关系的线性表，是一种线性结构的可序群集。(vector,list,deque)
+关联式容器:和顺序性容器不一样，关联式容器是非线性的树结构，更准确的说是二叉树结构。(set，map，multiset,multimap)
+容器适配器:适配器是使一事物的行为类似于另一事物的行为的一种机制。容器适配器是让一种**已存在的容器**类型**采用另一种不同的抽象类型**的工作方式来实现的一种机制。
+其实仅是发生了接口转换。就是用已知的容器来实现另一种容器(stack,queue,priority_queue,slist)
+
+28.golang中函数可以返回多个值，外部调用时可按返回顺序接收返回值，不想接收的返回值可用_占位符过滤.c++中可以用tuple代替,std::tie，std::igonre
+// golang
+func vals()(int,int,int)  {
+	return 3,7,9
+}
+
+a,b,_ : vals();
+
+// c++
+std::tuple<int,int,int> vals() {
+	return {3,7,9};
+}
+
+int a,b;
+std::tie(a,b,std::igonre) = vals;
+
+c++17中的一个新特性--结构化绑定更简洁
+auto [a,b,c] = vals();
+
+29.如果程序中使用了getchar()作为程序阻塞的方法，那这个程序就不能以后台的形式运行(a.out &),unix是这样解释的，当后台任务遇到getchar()时会产生
+SIGINT信号，导致程序异常退出
 
 
+30.boost::enable_shared_from_this是一个好用的智能指针工具，可以在boost::bind回调中使用this而不需要担心函数回调后this被释放，但是存在一种场景
+基类继承了enable_shared_from_this,派生类中直接使用Base::shared_from_this时会报错，那是因为Base::shared_from_this返回的时shared_ptr<Base>,而在
+c++中是不允许基类直接转换为派生类,需要使用dynamic_point_cast<Driver>进行转换
 
+31.a.一直以来使用vs总是有中文不能正常输出<常量中有换行符>，编译报一大堆警告和错误，这是可以在--->属性---->c/c++--->所有选项--->附加选项加上 /utf-8选项即可解决,并建议
+在后面的工程中也加上此选项
+b.如果是QT使用MSVC编译器也会遇到上述问题，解决方案，工具--->选项--->文本编辑器--->行为--->文件编码--->默认编码选择UTF8--->UTF-8 BOM选择:如果编码是UTF8则添加
+在包含中文符号的文件添加宏定义:#pragma execution_character_set("UTF-8")就解决了(防止MingGW不能识别该宏，可使用_MSVC宏定义限制)
+
+32.终于知道boost不用连接库直接编译源码的方法了，先要声明宏BOOST_ALL_NO_LIB，然后将boost_1_69_0/libs/下面对应的库目录下的src下的文件加入
+项目源码中一起编译，就可以了，也可以针对每一个库这样做，例如date_time(BOOST_DATE_TIME_NO_LIB)
+
+33.其实vs提供命令行编译方式，很多第三方开源软件也默认支持cmake或nmake构建工程，但直接从cmd或powershell下是无法使用cmake或nmake或cl的，要使用
+Vistual Studio专用的命令行工具《适用于VS2017的本机工具命令提示(注意32bit还是64bit)》,在这个工具下才可以使用全部的vs下的工具
+
+34.libcurl库编译时如果指定了ENABLE_WINSSL选项，就包含了ssl库，如果这时候项目中包含了其他也要使用导ssl库，可能就会默认连接curl库中的ssl，
+就会导致连接不正常，所有如果使用libcurl的话就要注意连接ssl库的问题
+
+35.vs编写windows程序时默认动态链接运行库，倒是这样对于没有安装windows运行库的计算机是不能正常运行的，要不就是连动态库一起拷贝，要不就静态链接
+运行库，静态链接运行库方法：
+项目 -> 配置属性->常规->MFC的使用 :在静态库中使用MFC（此项必须设置）。
+项目 -> 配置属性->C/C++->代码生成->运行库 :选择/MT。（此项可选，设置之后部分机器可能会编译出错）
+
+
+36.c++访问redis第三方库，CRedisClient(https://github.com/shawn246/redis_client),是一个不错的redis访问数据库工具，
+但是也相应的存在bug,需要自己外加代码选择db,和auth（认证）,在CRedisConnection::ConnectToRedis中添加，注意他的redisCmd.SetArgs
+里面的m_bShareMem，默认是开启的，CRedisCommand redisCmd("cluster", false);需要额外的添加false；
+
+37.今天学习go语言多维切片,[][]int,是这样理解的，这是一个切片类型，他的元素类型是[]int(整形切片),这样我联想到学习多年的c中的多维数组,
+int[4][3];之前一直是这样理解的:这是一4*3的二位数组，这样理解没错，但是我认为这样理解更为恰当:这是一个包含3个元素的一维数组，他的元素类型是
+一个int[4]的一维数组
+
+
+38.Mingw Mingw-w64 TDM-GCC之间的区别，怎样选型
+共同的:
+一、 他们都是用于编译生成Windows应用程序的工具链。
+二、 他们都是基于gcc的。
+
+1. MinGW应该是最先诞生的。只支持生成32bit程序，不建议使用
+2. MinGW-w64项目最初是做为MinGW的一个分支而诞生，但现在已经独立发展。可支持生成32bit和64bit的程序（推荐使用）
+3. TDM-GCC是对MingGW-w64的工具打包
+
+39.****由于Mingw-w64的稳定,且不容易出错，golang底层也要用到，所以就选用Mingw-w64做为之后的Windows平台的gun开发工具****
+下载：http://www.mingw-w64.org/doku.php/download (mingw-w64-install.exe)
+打开mingw-w64-install.exe
+选择平台****这步最重要i686,是32位平台
+x86_64是64位平台,平台很重要，将决定你以后能够通过gcc编译出来的程序位数，也是golang的cgo平台能不能运行在32bit或64bit的前提
+目前尝试用mingw-w64 加-m32参数编译32位程序失败，因为mingw-64只包含64位的库，可以安装mingw-w64 i686来获取32位库
+
+
+40.算是解决了一个大问题了，golang交叉编译32位程序时，只要用到了cgo就编译不过，总是提示库冲突，是因为本地的mingw-64是64位的，并没有32位的库，
+解决办法:
+安装Mingw-w64的32位版(i386)
+将i686-w64-mingw32-gcc.exe所在的目录添加进环境变量
+set GOARCH=386
+set CGO_ENABLED=1
+set CC=i686-w64-mingw32-gcc
+set CXX=i686-w64-mingw32-g++
+就可以了，为什么不将CC设置成gcc?
+因为系统上同时安装了mingw-w64的64位版和32位版，而且都同时加入了环境变量，谁的环境变量排在前面gcc就是谁的，所以为了区分
+64为的gcc g++:x86_64-w64-mingw32-gcc x86_64-w64-mingw32-g++
+32位的gcc g++:i686-w64-mingw32-gcc i686-w64-mingw32-gc++
+耗时几天
+
+
+41.上面的是针对windows的，如果平台是linux,要在linux64编译出32位程序，就不用像windows这么复杂，只需要安装32位的运行库即可，
+其实windows也可以这样做，但是gcc -m32 它不会去链接32位库（应该还要通过-L链接选项去限定，但没有成功），ubuntu安装32位运行库:
+sudo apt-get install libc6-dev-i386
+centos:
+yum install libgcc-dev.i686
+
+
+42.今天算是弄好了golang的Gmssl,我编译好了GMSSL得到了libssl.a libcrypto.a,我想以静态库的方式链接，但是一直链接不上，是两个问题导致的
+1.Gmssl本来是在build.go里面写好了编译参数
+#cgo darwin CFLAGS: -I/usr/local/include
+#cgo darwin LDFLAGS: -L/usr/local/lib -lcrypto -lssl
+1.darwin参数限定了平台,我们在linux上编译，应该改成linux
+2.虽然它指定了链接库路径与要链接的库名称，但是与我们编译出的.a所在目录不一致，导致不能链接，所有需要指定正确的目录
+3.-lssl -lcrypto默认链接动态库，由于之前系统遗留的openssl库，导致它去链接openssl的库，没能链接正确的Gmssl库
+4.链接静态库需要指定库的路径 /usr/lib/libssl.a /usr/lib/libcrypto.a才能正确链接
+5.libssl.a 和 libcrypto.a的顺序不能乱，乱了也链接不上
+
+43.linux下的go env设置和windows不同,win下直接set GOARCH=386但是linux这样设置不生效，必须在编译之前指定:GOARCG=386 go build main.go
+所有就像42描述的问题，可以通过CGO_LDFLAGS="/usr/lib/libssl.a /usr/lib/libcrypto.a" go build main.go来编译
+
+44.这个问题困扰了几天时间，在给后台写一个工具时，需要用到国密Gmssl库，本身这个库是给nodejs使用的，node是依赖openssl库的，就是因为这个原因
+导致的问题，Gmssl是openssl的一个分支，只不过Gmssl实现了一系列国密算法，所以他们包含的公共部分是一样的(函数名和全局变量名)，node去调用我所导出的so时，so里面
+所用到的函数默认链接到openssl的动态库上了，由于openssl里面没有国密的椭圆曲线，所以就生成不了椭圆曲线。导致调用失败。
+怎么样才能让so里面的函数链接到Gmssl的库上。就差一个编译参数-Wl,-Bsymbolic
+应用程序进行链接的时候，动态库中全局变量定义，将会被应用程序中同名的全局变量所覆盖。这样也就造成了，在动态库中修改A变量时，应用程序中的A也发生了变化。
+Bsymbolic表示强制采用本地的全局变量（或函数）定义，这样就不会出现动态链接库的全局变量定义被应用程序/动态链接库中的同名定义给覆盖了！
 
 
 
