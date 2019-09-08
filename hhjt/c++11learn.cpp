@@ -442,3 +442,88 @@ template <intmax_t N, intmax_t D = 1> class ratio; N分子 D分母
 duration.count()
 
 
+
+75.编写windows后台服务程序源代码:
+{
+#include <Windows.h>
+
+HANDLE hSvcStopEvent = nullptr;
+SERVICE_STATUS serviceParam;
+SERVICE_STATUS_HANDLE serviceHandle;
+static char name[64]{ "ClearService" }; // 服务名
+
+void WINAPI CtrlHandler(DWORD request)
+{
+	// 接收到命令时的动作,sc start $ServerName，或直接在windows服务里面手动操作
+	switch (request)
+	{
+	case SERVICE_CONTROL_STOP:
+		SetEvent(hSvcStopEvent);
+		Sleep(250);
+		serviceParam.dwCurrentState = SERVICE_STOPPED;
+		SetServiceStatus(serviceHandle, &serviceParam);
+		break;
+	case SERVICE_CONTROL_SHUTDOWN:
+		Sleep(250);
+		serviceParam.dwCurrentState = SERVICE_STOPPED;
+		SetServiceStatus(serviceHandle, &serviceParam);
+		SetEvent(hSvcStopEvent);
+		break;
+	default:
+		break;
+	}
+}
+
+int InitService(void)
+{
+	serviceParam.dwServiceType = SERVICE_WIN32;
+	serviceParam.dwCurrentState = SERVICE_START_PENDING;
+	serviceParam.dwControlsAccepted = SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_STOP; // 准备接收的命令
+	serviceParam.dwWin32ExitCode = 0;
+	serviceParam.dwServiceSpecificExitCode = 0;
+	serviceParam.dwCheckPoint = 0;
+	serviceParam.dwWaitHint = 0;
+
+	serviceHandle = ::RegisterServiceCtrlHandler(name, CtrlHandler); // 注册服务
+	if (serviceHandle == nullptr)
+	{
+		return -1;
+	}
+	hSvcStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	serviceParam.dwCurrentState = SERVICE_RUNNING;
+	SetServiceStatus(serviceHandle, &serviceParam);
+
+	return 0;
+}
+
+void WINAPI ServiceMain(int argc, char** argv)
+{
+	if (InitService() != 0)
+	{
+		return;
+	}
+
+	// 这里就是自己的服务入口点
+	// startSelfService()
+
+	WaitForSingleObject(hSvcStopEvent, INFINITE); // 阻塞?等待命令
+	// 自定义服务资源释放(如果有)
+}
+
+
+int main(int argc, char* argv[])
+{
+	SERVICE_TABLE_ENTRY entrytable[2];
+
+	entrytable[0].lpServiceName = name;
+	entrytable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
+	entrytable[1].lpServiceName = nullptr;
+	entrytable[1].lpServiceProc = nullptr;
+
+	StartServiceCtrlDispatcher(entrytable);
+	return 0;
+}
+}
+
+
