@@ -45,7 +45,7 @@ dt1 - dt2 == days(1)
 3.格式化输出boost::posix_time::to_simple_string(), boost::posix_time::to_iso_string(), boost::pos_formatix_time::to_iso_extended_string();
 4.与struct tm转换，boost::posix_time::to_tm(pt); 但是没有像date那样的date_from_tm，只有一个boost::posix_time::from_time_t();
 5.基本计算,由于ptime是由date与time_duration的组合,所以它的计算可以拥有date与time_duration的能力
-ptime pt = boost::posix_time::from_string("2019-05-04 21:27:34");
+ptime pt = boost::posix_time::time_from_string("2019-05-04 21:27:34");
 ptime pt1 = pt + days(1); // 加一天
 ptime pt2 = pt + hours(1); // 加一小时
 6.可以使用成员函数判断是否是一个有效时间点is_not_a_date_time()

@@ -101,7 +101,8 @@ admin hk123456 248
 要清除之前保存的凭据win:控制面板----->用户帐户-------->凭据管理器-------->普通凭据---->找到你之前的git地址，删除----->ok
 
 20.windows创建服务命令:sc
-(1)创建服务 sc create $ServiceName	binPath= (此处有空格)"exe路径" start= "启动方式"
+(1)创建服务 sc create $ServiceName	binPath= (此处有空格)"exe路径" start= (此处有空格)启动方式 displayname= (此处有空格)"Background Intelligent Clean Service" 
+eg:sc create ClearService binPath= "C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin\WaveMonitor.exe" start= auto displayname= "Background Intelligent Clean Service"
 (2)启动服务 sc start $ServiceName
 (3)停止服务 sc stop $ServiceName
 (4)删除服务 sc delete $ServiceName
@@ -146,7 +147,7 @@ trunk	 主干，主分支
 3.http_port 3128修改代理服务器端口，注意阿里云的防火墙
 4. acl CONNECT method ...行下加入 acl myhome src 171.213.12.0/255.0.0.0(外网ip ip138) /*此步骤可以省略，只不过是设置一个变量值*/
 5. http_access allow localhost行下面加入http_access allow myhome(上一步的变量值)
-6.如果想允许所有的客户端都能访问，就加入htto_access allow all
+6.如果想允许所有的客户端都能访问，就加入http_access allow all
 7.注释掉http_access deny all这一句(默认不允许任何客户端接入)
 8.sudo systemctl restart squid.service
 9.sudo netstat -nlt 查看是否监听成功（可以在百度中输入ip138查看是否设置成功）

@@ -56,7 +56,10 @@ git clone --depth 10 git_仓库_url 只会获取最近 xx（10条提交记录的
 13.密钥、加密、签名、证书、CA(证书认证机构)
 密钥对，公钥是公开的，谁都可以拥有，私钥自己保存
 公钥加密----->私钥解密
+加密过程,A->B通信，A将公钥给B，B将公钥给A，通信时互相用对方公钥加密，对方收到后用他自己的私钥解密
 私钥签名----->公钥验证
+验签过程，A->B通信，A将公钥给B，B将公钥给A，通信时用自身私钥签名，对方收到后用发送方的公钥验签
+其实不是有加密方式有对称和非对称加密，签名也有对称和非对称只分，普通的签名都是对称的sm2等，md5,sha256等散列函数就可以看成是一种对称签名的方式
 怎么保证公钥是张三的，通过第三方机构CA验证，拥有私钥者(张三)向CA申请数字证书(CA一般是权威的第三方机构，收费(就像是公安局))，其实数字证书就是
 CA利用自身的根证书(密钥对)中的私钥对张三的公钥签名形成的，所以张三向外公布的公钥就是他从CA获取的数字证书,客户端想要证明数字证书是张三的，就用
 CA本身的公钥验签张三的数字证书，只要CA是权威的，那么主流浏览器（客户端）都会有CA的公钥，为什么12306会要求浏览器安装根证书，其实就是12306自身有一个
@@ -91,7 +94,8 @@ google protocol buffer学习:
 
 22.http服务器压力测试工具:siege，可以顺序或随机发送urls.txt 内的url，使用方法简单https://www.cnblogs.com/lrxing/p/3782530.html
 
-23.windows安装Gmssl(也是折腾好久)
+23.
+a.windows安装Gmssl(也是折腾好久，断断续续几个月)
 1.clone Gmssl master代码(我编译的是GmSSL-gmbrowser-v0.1)
 2.安装nasm(https://www.nasm.us/),这步关键，一定要现在对，64位的就只能下载win64版本,32位的只能下载win32版本，win32也能安装在64位的机器上,然后编译会有莫名奇妙的错误
 3.将NASM的nasm.exe所在目录添加至环境变量
@@ -99,6 +103,45 @@ google protocol buffer学习:
 5.注意上面步骤是编译动态库的，如果只想要静态库，加上no-shared选项,no-asm也要加上，防止出现因为汇编的一些错误
 6.nmake,编译过程中会出现错误，我遇到的是中文注释,把对应包含中文注释的地方删除,就ok了
 7.如果需要安装nmake install
+b.mingw64下安装gmssl(整整搞了两天,尝试了各种办法,msys2,lib连接等，泪奔,其实就是一个小问题，总是不愿意去尝试找原因，而是直接认为是环境的原因)
+1.clone Gmssl master代码(我编译的是GmSSL-gmbrowser-v0.1)
+2.perl Configure mingw64 no-asm no-shared no-dso
+3.由于cmd不支持很长的参数输入，修改Makefile，DEPS+=****后面的***删除只留下DEPS+=,不要DEPS+=""会有问题
+4.mingw32-make -j8 (以为一键完成，可是卡了两天，就是报的一种错误)
+In file included from C:/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/x86_64-w64-mingw32/include/windef.h:8,
+                 from C:/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/x86_64-w64-mingw32/include/windows.h:69,
+                 from C:/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/x86_64-w64-mingw32/include/winsock2.h:23,
+                 from crypto/sof/../../e_os.h:190,
+                 from crypto/sof/sof_lib.c:57:
+C:/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/x86_64-w64-mingw32/include/minwindef.h:24:29: error: conflicting types for 'ULONG'
+   typedef unsigned __LONG32 ULONG;
+                             ^~~~~
+In file included from include/openssl/gmsaf.h:57,
+                 from crypto/sof/sof_lib.c:54:
+include/openssl/sgd.h:361:18: note: previous declaration of 'ULONG' was here
+ typedef UINT32   ULONG;
+一眼就能看出来是类型冲突了，但是刚开始又不想去深究，以为是环境导致的(本来也是环境导致的),就尝试换了各种环境，其中发现msys2其实挺好用的(ps:msys-bat启动 --full-path)，是一个
+windows下的arch架构的Linux环境，支持pcaman包管理工具，一键安装gcc make等，而且也在msys编译成功了，但是go支持mingw gcc,所以也白搞，后面一咬牙，还是用mingw编译，去找原因。
+发现原因其实就是:crypto下面有很多.c文件包含了../../e_os.h,e_os_.h包含了windef.h,而windef.h里面用宏定义了ULONG等一堆基础数据类型，但是gmssl里面也自己定义了自己的一套基础
+数据类型(比如像gmsaf.h等),但是gmsaf.h里面使用了ifndef _WINDEF_H限定的，按照这样子说，应该是没什么问题的，问题就出在gmsaf.h出现在了e_os.h前面，所以ifndef _WINDEF_H失效了。
+只要把所有产生错误的c文件里gmsaf.h等放在e_os.h下面，ifndef _WINDEF_H就生效了，问题就解决了
+总结:有时候遇到问题，不要认为解决这个问题很难，心理上觉得自己解决不了，其实并不是所有问题都很难，只是自己没有胆量去尝试
+由于mingw在编译时链接到了-lws2_32 -lgdi32 -lcrypt32(别以为这是windows的库，其实还是mingw的.a，mingw还是很强的，实现了一遍windows的基础库),
+所有在编译go程序的时候LD_FLAGS还是要加上上述参数
+
+
+c.Alpine上编译Gmssl(弄了一晚加一天),之前已经在centos上编译出了对应的.so文件，但是生产环境上是用docker+alpine环境运行，由于现在通用的linux发行版的c库都是glibc，
+而alpine得c库是musl-libc,在glibc上编译得程序是不能直接在alpine上运行的，然后就在alpine上直接编译，因为想要在特定系统上能运行的最好办法就是在要运行的机器上源码
+编译。但是并不是一帆风顺的：
+/usr/lib/gcc/x86_64-alpine-linux-musl/8.2.0/../../../../x86_64-alpine-linux-musl/bin/ld: ./libcrypto.so: undefined reference to `getcontext'
+/usr/lib/gcc/x86_64-alpine-linux-musl/8.2.0/../../../../x86_64-alpine-linux-musl/bin/ld: ./libcrypto.so: undefined reference to `setcontext'
+/usr/lib/gcc/x86_64-alpine-linux-musl/8.2.0/../../../../x86_64-alpine-linux-musl/bin/ld: ./libcrypto.so: undefined reference to `makecontext'
+
+因为getcontext这些函数是已经过时了的函数，musl-libc已经不支持这几个函数了，然后就各种换库，都失败告终
+最后在openssl的issues中(**这也是解决问题的一种办法**)搜索关键词(alpine)就找到了原因
+ crypto/async/arch/async_posix.h 修改if _POSIX_VERSION >= 200112L 为 # if _POSIX_VERSION >= 200112L \
+     && (_POSIX_VERSION < 200809L || defined(__GLIBC__))
+
 
 24.Windows shell工具总是被吐槽的，cmd,powershell,后续有gitshell依靠git自身携带的bin，带入一些linux下常用的命令,但是今天发现一款比gitshell还要好用的shell
 cmder(https://cmder.net/)
@@ -174,10 +217,95 @@ go get -u -v golang.org/x/lint/golint
 
 36.golang的第三方库很丰富，很多，但是质量也参差不齐，怎样去识别一个三方库的可靠性，https://godoc.org/ 官方专门有一个库搜索器,可以看第三方github的STARS数量，排在前面的应该还不错
 
+37.iostat,linux io监控工具，还比较好用,用时查询 iostat -kx 1
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           0.47    0.00    0.30    0.03    0.00   99.20
+
+Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+sda               0.00     0.06    0.25    5.48    12.07   419.53   150.66     0.01    0.95    1.54    0.92   0.52   0.30
+%user：CPU处在用户模式下的时间百分比。
+%nice：CPU处在带NICE值的用户模式下的时间百分比。
+%system：CPU处在系统模式下的时间百分比。
+%iowait：CPU等待输入输出完成时间的百分比。
+%steal：管理程序维护另一个虚拟处理器时，虚拟CPU的无意识等待时间百分比。
+%idle：CPU空闲时间百分比。
+
+如果%iowait的值过高，表示硬盘存在I/O瓶颈
+如果%idle值高，表示CPU较空闲
+如果%idle值高但系统响应慢时，可能是CPU等待分配内存，应加大内存容量。
+如果%idle值持续低于10，表明CPU处理能力相对较低，系统中最需要解决的资源是CPU。
+
+%util：这个值比较重要,一秒中有百分之多少的时间用于 I/O 如果%util接近100%，说明产生的I/O请求太多，I/O系统已经满负荷
+
+38.iotop，查看具体进程占用io的情况,上面的iostat命令是查看系统级别的io使用情况，iotop查看具体进程使用io情况， iotop -o
+
+39.windows下安装boost，以前一直都是参考网上的参数编译，后来发现编译出来的库有时候vs不能用，应为库还分release，debug，多线程,静态库，动态库之分，想要编译出指定模式的库，还得仔细看参数
+参考(https://blog.csdn.net/qq_27395289/article/details/87429402)
+1.首先指向.\bootstrap.bat生成编译工具bjam和b2(此步没有参数)
+2.编译指定库
+bjam --toolset=msvc-14.1 address-model=64 --with-system --with-date_time --with-chrono --with-regex --with-thread link=static runtime-link=static  threading=multi --build-dir=./build variant=release
+--build-dir=<builddir> 编译的临时文件会放在builddir里(这样比较好管理，编译完就可以把它删除了)
+--stagedir=<stagedir>存放编译后库文件的路径，默认是stage
+--build-type=complete 编译所有版本，不然只会编译一小部分版本（确切地说是相当于:variant=release, threading=multi;link=shared|static;runtime-link=shared）
+variant=debug|release 决定编译什么版本（对应文件中的d 调试版本 不出现表示 release 版）
+link=static|shared 决定使用静态库还是动态库。（对应文件中的BOOST_LIB_PREFIX ）
+threading=single|multi 决定使用单线程还是多线程库。（对应文件中的BOOST_LIB_THREAD_OPT） 
+runtime-link=static|shared 决定是静态还是动态链接C/C++标准库。（对应文件中的BOOST_LIB_THREAD_OPT）
+--with-<library> 只编译指定的库，如输入--with-regex就只编译regex库了。
+--show-libraries 显示需要编译的库名称
+
+不断变换variant、link、runtime-link就可以编译出不同版本的库文件了
+
+40.vcpkg,一款windows下好用的c++第三方库管理工具，比如我要安装libcurl,zlib，cpp-json等第三方库时好用
+参考文章:https://blog.csdn.net/cjmqas/article/details/79282847#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8vcpkg
+
+
+41.在windows下使用cgo，不像linux上那么方便，go官方推荐的是mingw，网上很多c/c++第三方库都是用,configure编译，windows下不能直接运行configure,
+但是mingw套件中的msys可以，我安装了msys1.0.11，可以直接运行configure，还要make等工具非常好用的
 
 
 
 
+42.编写linux开机启动项
+要使自己的脚本或程序再/etc/init.d下面开机自动运行，操作步骤
+在/etc/init.d下编写脚本（vim /etc/init.d/selfd），脚本内容如下，以下内容必须要，否则会报chkconfig不支持
+
+#!/bin/sh
+#authorized_keys
+# Startup script for selfd
+#
+# chkconfig: - 85 15
+# description: Self Script
+# processname: selfd
+su - root -c /root/gioneco/itpupdater &
+
+保存上面脚本
+执行sudo chkconfig --add selfd
+https://cloud.tencent.com/developer/article/1416251
+
+43.linux下保存git密码，不用每次都要手动输入
+打开~/.gitconfig  有的git版本可能是~/.git/config
+增加以下内容即可:
+[credential]
+        helper = store
+
+
+
+44.原来代理原来就是如此，xshell隧道 secureCRT端口映射,你可以借助跳板机访问任何跳板机能够访问到的网页,什么内网穿透，都是一个原理，借助跳板机
+
+45.又找到一款翻墙工具pandaVPN
+
+46.设置ssh公钥登陆，并不是设置好authorized_keys就行的文件的权限位是有要求的,.ssh目录权限位700,authorized_keys权限位600,有可能不是一定的，用命令生成ssh参考
+
+47.有的很优秀的工具需要学习下:
+Docker、K8s、Jenkins、Rancher、Zabbix、Grafana、Es(ElasticSearch),Clickhouse
+
+48.在本地创建了使用的git库后，想把这个库与远程库相关联,比如在github.com上创建了一个库:https://github.com/yourname/learngit.git
+本地库:git@112.124.109.39:~/dev/zyh/HaerBinBomSdk.git
+步骤1：进入本地库目录，执行git remote rm origin
+步骤2：git remote add origin https://github.com/yourname/learngit.git
+步骤3：git pull origin master --allow-unrelated-histories
+步骤4: git push -u origin master
 
 
 

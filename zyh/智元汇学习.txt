@@ -1,0 +1,9 @@
+数据量增加架构演变
+mysql----->mycat------>ES+ClickHouse----->TIDB
+
+TIDB:适合存储(行式存储，适合业务)
+
+
+ClickHouse:(列式存储)适合统计
+
+HttpRunner:http接口自动化测试

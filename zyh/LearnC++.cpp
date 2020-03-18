@@ -247,7 +247,7 @@ centos:
 yum install libgcc-dev.i686
 
 
-42.今天算是弄好了golang的Gmssl,我编译好了GMSSL得到了libssl.a libcrypto.a,我想以静态库的方式链接，但是一直链接不上，是两个问题导致的
+42.今天算是弄好了Linux下golang的Gmssl调用,我编译好了GMSSL得到了libssl.a libcrypto.a,我想以静态库的方式链接，但是一直链接不上，是两个问题导致的
 1.Gmssl本来是在build.go里面写好了编译参数
 #cgo darwin CFLAGS: -I/usr/local/include
 #cgo darwin LDFLAGS: -L/usr/local/lib -lcrypto -lssl
@@ -267,8 +267,26 @@ yum install libgcc-dev.i686
 应用程序进行链接的时候，动态库中全局变量定义，将会被应用程序中同名的全局变量所覆盖。这样也就造成了，在动态库中修改A变量时，应用程序中的A也发生了变化。
 Bsymbolic表示强制采用本地的全局变量（或函数）定义，这样就不会出现动态链接库的全局变量定义被应用程序/动态链接库中的同名定义给覆盖了！
 
+45.在项目中，可能会用到不同的gcc版本，就会在同一系统下存在两个不同版本的gcc编译器，尽量不要将两个版本的gcc的bin目录都防止PATH下，这样可能会导致一些不必要的麻烦
+不常用版本的gcc可以不必放在PATH下，正常编译是只要指定绝对路径即可，但如果是cmake，或者是configure编译项目怎么办，小问题
+ccmake:两种方式
+1.cmake使用的编译器默认是cc和c++,然而这两个命其实只是一个软连接，在编译项目时只需要将cc和c++的链接指向指定的gcc和g++即可编译调试
+2.在主CMakeLists.txt中指定编译器绝对路径:
+set(CMAKE_C_COMPILER "/usr/local/gcc8/bin/gcc")
+set(CMAKE_CXX_COMPILER "/usr/local/gcc8/bin/g++")
+configure:一般configure在指向时都可在命令行指定编译器,不同configure可能不太一样，但都会提供，使用configure --help查看
 
+编译boost时指定编译器:运行bootstrap.sh后生成project-config.jam 打开修改using gcc为using gcc : 8.2.0 : /usr/local/gcc8/bin/g++
 
+46.库路径也可以同个上述方式指定
 
+47.用mingw编译libmgp123时遇见错误invalid instruction suffix for push，错误原因是，在64位系统和32位系统对于某些汇编指令的处理
+支持不一样造成的。在文件出现错误的.s中，在代码头部添加.code32即可。
+
+48.还是中文编码的问题,vsc++，要保持utf8,就要设置/utf-8参数，我只设置了/source-charset:utf-8,只用源代码是utf-8，但执行文件不是utf-8格式的
+若只需要修改源代码的编码，也可以只输入：
+/source-charset:utf-8
+类似的，还有可执行文件编码：/execution-charset:utf-8
+/utf-8相当于同时设置源代码和可执行文件。
 
 

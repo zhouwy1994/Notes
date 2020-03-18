@@ -29,3 +29,10 @@ type T1 struct {
 
 3.可用binary.Size()方法求得结构体在以1为对其系数下所占内存数，但是结构体成员只支持基础数据类型，不支持复合数据类型
 
+4.context是一种在处理慢请求时开多个goroutine时，连接断开时退出众多goroutine的一种手段,通过派生的方式生成子context，父context调用cacel函数是，各子context都能收到信号
+
+5.golang的两个常用的包管理工具vendor(第三方 将依赖都放在工程目录下),go 1.12版本的go modules,构建时拉去依赖(方便管理依赖版本)
+
+6.UPX+压缩golang可执行程序,upx压缩golang可执行文件首先加上编译参数-ldflags,go build -ldflags '-w -s' main.go ,upx main
+
+7.正则表达式查找子项使用Find*Submatch类函数，该函数会返回所有已经匹配的结果通过下标取
