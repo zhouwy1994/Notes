@@ -135,7 +135,7 @@ c.Alpine上编译Gmssl(弄了一晚加一天),之前已经在centos上编译出�
 编译。但是并不是一帆风顺的：
 /usr/lib/gcc/x86_64-alpine-linux-musl/8.2.0/../../../../x86_64-alpine-linux-musl/bin/ld: ./libcrypto.so: undefined reference to `getcontext'
 /usr/lib/gcc/x86_64-alpine-linux-musl/8.2.0/../../../../x86_64-alpine-linux-musl/bin/ld: ./libcrypto.so: undefined reference to `setcontext'
-/usr/lib/gcc/x86_64-alpine-linux-musl/8.2.0/../../../../x86_64-alpine-linux-musl/bin/ld: ./libcrypto.so: undefined reference to `makecontext'
+/usr/lib/gcc/x86_64-alpine-linux-musl/8.2.0/../../../../x86_64-alpine-linux-musl/bin/ld: ./libcrypto.so: undefined reference to `makecontext''
 
 因为getcontext这些函数是已经过时了的函数，musl-libc已经不支持这几个函数了，然后就各种换库，都失败告终
 最后在openssl的issues中(**这也是解决问题的一种办法**)搜索关键词(alpine)就找到了原因
@@ -270,19 +270,20 @@ runtime-link=static|shared 决定是静态还是动态链接C/C++标准库。（
 要使自己的脚本或程序再/etc/init.d下面开机自动运行，操作步骤
 在/etc/init.d下编写脚本（vim /etc/init.d/selfd），脚本内容如下，以下内容必须要，否则会报chkconfig不支持
 
-#!/bin/sh
-#authorized_keys
-# Startup script for selfd
+#!/bin/bash
 #
-# chkconfig: - 85 15
-# description: Self Script
-# processname: selfd
-su - root -c /root/gioneco/itpupdater &
+# Startup script for itpupdaterd
+#
+# chkconfig: 345 85 15
+# description: Gionoco process self-starting script
+# processname: itpupdaterd
+su - root -c /Afc/gioneco/itpupdater &>/dev/null &
 
 保存上面脚本
 执行sudo chkconfig --add selfd
 https://cloud.tencent.com/developer/article/1416251
 
+systemctl、service的服务就是通过这种方式启动
 43.linux下保存git密码，不用每次都要手动输入
 打开~/.gitconfig  有的git版本可能是~/.git/config
 增加以下内容即可:
@@ -307,6 +308,32 @@ Docker、K8s、Jenkins、Rancher、Zabbix、Grafana、Es(ElasticSearch),Clickhou
 步骤3：git pull origin master --allow-unrelated-histories
 步骤4: git push -u origin master
 
+49.哈尔滨中软闸机Linux系统文件系统只读，不能写入文件，查了下原因发现是系统启动时就把磁盘挂载成只读系统
+将文件系统重新挂载成可写系统:mount -o remount,rw /
+在写入成功后再恢复mount -o remount,ro /
 
+50.之前一直看网页源代码都是F12，也看不出哪部分对应什么代码，网页代码调试快捷键 Ctrl+Shift+C,指哪就出来代码，主要是还能自动替换变量，v8引擎
 
+51.xmind思维导图工具
 
+52.windows查看所有进程命令tasklist,kill进程taskkill /F /IM chrome.exe,/IM：根据程序名kill，/PID：根据PID kill
+
+53.linux安装java环境，很简单，
+1.去java官网下载jdk1.8的64位的jdk-8u251-linux-x64.tar.gz压缩包
+2.mkdir -p /usr/local/java && tar -xvf jdk-8u251-linux-x64.tar.gz -C /usr/local/java
+3.在/etc/profile下增加环境变量
+export JAVA_HOME=/usr/local/java/jdk1.8.0_251
+export JRE_HOME=${JAVA_HOME}/jre
+export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
+export PATH=${JAVA_HOME}/bin:$PATH
+4.生效环境变量文件 source /etc/profile
+
+54.es安装https://blog.csdn.net/happyzxs/article/details/89156068，先安装java环境上一步，然后下载最新版es解压，
+遇到得问题在链接中都有
+
+55.在日常操作中难免会应为操作不当导致linux不能启动，比如删除系统so等，这时候就需要用安装盘启动方式（虚拟机也可以，选择启动时连接），进入
+troubleshooting模式，可以把原来系统挂载到光盘内操作
+
+56.编写http api文档，网上一个第三方api工具比较好用，APIDOC https://apidocjs.com/
+
+57.前端有个优秀的通用用户界面框架Vue

@@ -48,9 +48,14 @@ cmake通常也是这个不走，只不过第一步为cmake $option
 (1)源码安装
 wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.bz2
 tar zxvf boost_1_67_0.tar.gz
-sudo ./bootstrap.sh --prefix=/usr/local/include/boost --with-$libname //此处目录可将其安装在gcc默认的目录下
-sudo ./b2 install
-默认最小安装，可通过选项--with-$libname(atomic,chrono,thread)等选择安装
+./bootstrap.sh --show-libraries
+sudo ./bootstrap.sh --prefix=/usr/local/include --with-$libname
+--prefix //指定boost安装目录，也就是头文件目录
+--with-$libname //指定要安装的库，需要哪些就装哪些，不必要全部装，不指定改选项就是最小安装(基本上的库都在) --with-all(全部安装)
+// 执行bootstrap.sh的目的就是生成b2所需要的文件
+sudo ./b2 install // 该步骤就开始编译上步骤中指定的库
+// 生成的库文件会在./bin.v2/libs/date_time/build/gcc-$version/release/下
+// 上面的目录是根据gcc版本分，但实时编译的库路径在./stage/lib/下
 (2)平台安装(ubuntu16)
 sudo apt-get install libboost-dev
 上面安装后可得到boost所有头文件(hpp)
