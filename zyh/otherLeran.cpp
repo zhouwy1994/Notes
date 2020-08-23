@@ -337,3 +337,24 @@ troubleshooting模式，可以把原来系统挂载到光盘内操作
 56.编写http api文档，网上一个第三方api工具比较好用，APIDOC https://apidocjs.com/
 
 57.前端有个优秀的通用用户界面框架Vue
+
+
+58.一款常用的测试工具jmeter，可以用于http接口的压力测试
+
+59.阿里云主机登陆不上+控制台远程连接不上时，还有一个功能《发生远程命令》可以救急
+
+
+
+60.Linux的声卡驱动不会像Windows那么多，但是Alsa是Linux上应用比较广泛，linux-kernel-3以上内核默认带了alsa驱动，所以就不用
+再安装，查看系统是否已经安装alsa驱动:cat /proc/asound/devices 查看是否有设备
+alsa官网(https://www.alsa-project.org/)
+驱动层:alsa-driver(kernel-3以上可以不用装) ftp://ftp.alsa-project.org/pub/driver/alsa-driver-1.0.9.tar.bz2
+开发层(头文件，动态库):alsa-lib	ftp://ftp.alsa-project.org/pub/lib/alsa-lib-1.2.3.2.tar.bz2
+应用层(aplay:播放 arecord:录音):alsa-utils ftp://ftp.alsa-project.org/pub/utils/alsa-utils-1.2.3.tar.bz2
+以上安装通用步骤，以上层层依赖:./configure && make && make install
+录音和播放都要先找到设备: 
+aplay -l 或 arecord -l
+会得到：card 0: AudioPCI [Ensoniq AudioPCI], device 0: ES1371/1 [ES1371 DAC2/ADC]
+自需要记住card 和device -Hwd:$card,$device
+播放：aplay -Dhw:0,1 test.wave
+录音：arecord -Dhw:0,0 -d 10 -f cd -r 44100 -c 2 -t wav test.wav

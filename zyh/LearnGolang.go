@@ -70,11 +70,12 @@ set GOSUMDB=sum.golang.google.cn
 (13) kingpin https://gopkg.in/alecthomas/kingpin.v2 一款优秀的命令行参数解析工具
 (14) Tollbooth  https://github.com/didip/tollbooth 一款Go语言的 HTTP 限速中间件，可以限制某个接口每秒的访问次数
 (15) hystrix-go https://github.com/afex/hystrix-go 一款Go语言的 HTTP 限速中间件，可以对某个指定接口做熔断限制
-
 (16) go-Micro https://github.com/micro/micro 是一种go语言微服务开发框架。需要学习微服务架构的可以看一下
-
 (17) go-simplejson https:github.com/bitly/go-simplejson 一款比较好用的json解析库,全部支持链式操作，包括数组
-
+(18) logrus https://github.com/sirupsen/logrus 一款golang中用的比较多的日志库，具有比较高的定制化，通过Hook机制，学习博文:(https://blog.csdn.net/wslyk606/article/details/81670713)
+(19) viper https://github.com/spf13/viper 一款强大的配置文件读写库，支持 JSON, TOML, YAML, HCL, INI等格式
+(20) com https://github.com/Unknwon/com 一个golang的常用工具函数(Common Functions)一个小而美的工具包
+(21) Swagger github.com/swaggo/swag/cmd/swag@v1.6.5 一个好的 API's，必然离不开一个好的API文档，如果要开发纯手写 API 文档，不存在的（很难持续维护），因此我们要自动生成接口文档。
 11.golang Web框架选型，小型业务（echo）中型业务（gin）大型业务（beego）
 
 12.go原生http的理解：
@@ -217,3 +218,55 @@ atomic.Value 有两个方法Store Load可以实现原子性操作
 3. _ Interface = &Struct{}
 
 35.内置函数len求chan长度时表示chan内有多少个已写入但未消费的对象，而不是chan的容量，cap函数才能求chan的容量
+
+36.一个比较完整的http服务器处理过程图
+																	辅助包工具(第三方工具)
+																	Session管理
+main文件监听端口接收请求--->路由功能--->参数过滤--->controller<-->  Model------------------>数据库
+						<---视图输出<---输出过滤<--					日志管理
+																	缓存管理
+http请求从左侧main入口函数开始进入框架
+UrL路由解析然后确定执行那个控制器(controller)
+执行请求前的过滤器 （过滤器一般用来拦截请求，例如做api签名校验，session处理，安全验证等等）使用中间件实现
+执行控制器 （控制器根据需要调用model，session, 日志等模块）,所有我们认为的MVC中的MOdel不只是数据库
+执行请求后的过滤器
+视图输出返回给用户
+
+37.golang第三方日志记录器logrus,他的JSONFormatter里面有一个CallerPrettyfier(*runtime.Frame)，Frame里面明确有日志产生的文件名，函数
+使用非常方便，首先得打开logger.ReportCaller = true,而且可以通过TimestampFormat自动自定义时间格式，可以通过FieldMap字段改变默认字段名
+比如msg可以重命名为message，还可以自定义Formatter接口来实现自己的日志格式，可以实现Hook接口实现自己的钩子，比如第三方日志文件分割就是
+实现了Hook接口,也可以自己实现，这就是golang接口的好处
+
+38.logrus常用的日志回滚器github.com/lestrrat-go/file-rotatelogs，只需要设置几个选项就可以使用,
+	r1, err := rotatelogs.New("test-%Y%m%d%H%M%S.log", 
+		rotatelogs.WithRotationCount(7), 
+		rotatelogs.WithRotationTime(3*time.Hour))
+WithMaxAge：需要保留日志文件的日期，比如只需要保留3天内的文件，WithMaxAge(3*time.Hour*24)
+WithRotationCount：需要保留日志文件的个数,比如只需要保留7个文件，WithRotationCount(7)
+注意：WithMaxAge 和 WithRotationCount不能同时使用
+WithRotationTime():多久分割一次日志，比如三小时分割一次，WithRotationTime(3*time.Hour)
+为什么file-rotatelogs没有实现按照日志大小分割日志，因为这样的话每调用一次Write操作都会去判断一次文件大小，性能
+损耗大，按照时间分割是不错的选择。
+WithLinkName：当前日志文件的软链接，总是指向最新日志文件，只要Linux实现，Windows没实现
+ForceNewFile：如果日志文件名固定（没有设置%Y等后缀），那就算触发日志分割，也不会有新文件产生，只有设置次标志，系统才会
+分割出新日志文件，新日志文件名后缀为.1 .2
+
+39.golang调用so、或dll步骤
+dllHandle, err = syscall.LoadLibrary("WaveApi.dll")
+syscall.FreeLibrary(dllHandle)
+waveInInit, err = syscall.GetProcAddress(dllHandle, "waveInInit")
+syscall.Syscall6(waveInInit, 5, uintptr(channels), uintptr(samplesPerSec),
+		uintptr(bitPerSec), syscall.NewCallback(func(data *C.char, len C.int, user unsafe.Pointer) int {
+			waveData := C.GoBytes(unsafe.Pointer(data), C.int(len))
+			dataCb(waveData)
+			return 0
+}), uintptr(0), 0)
+如果dll中函数需要传入回调函数，则需要使用syscall.NewCallback或syscall.NewCallbackCDel转换，且golang的回调函数
+一定要有一个返回值（即使dll中的函数所需要回调函数没有返回值）
+
+40.c#常用第三方包 https://www.nuget.org/下载地址 https://www.cnblogs.com/harrychinese/p/CSharp_3rd_lib.html
+安装步骤，以RestSharp为例
+打开vs-->工具--->NuGet包管理器--->程序包管理控制台--->打开命令行-->输入官网的命令
+Install-Package RestSharp -Version 106.11.5-alpha.0.18
+
+41.一个不错的golang项目学习https://eddycjy.com/posts/go/gin/2018-02-11-api-01/
