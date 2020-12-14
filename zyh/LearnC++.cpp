@@ -295,3 +295,137 @@ m_global_conf->set("enable.auto.commit", "false", errstr);
 m_topic_conf->set("auto.offset.reset", "earliest", errstr);
 
 50.打包QT开发的exe文件依赖库,C:\Qt\Qt5.9.8\5.9.8\msvc2017_64\bin\windeployqt.exe message.exe
+
+
+51.开发sdk时，希望最后提供出来的就一个dll或so，第三方依赖尽量链接相应静态库，gcc中-static-libgcc -static-libstdc++ -Wl,-Bsymbolic编译参数
+就可以将gcc c++依赖的基础库封装，但是有的系统上需要提前安装yum install libstdc++-static
+
+Linux下编译so导出源文件里面的指定函数：
+1、在文件里面最前面加上：#define DLL_PUBLIC  __attribute__ ((visibility("default")))
+2、在文件里面需要导出的函数前加上：extern "C" DLL_PUBLIC 
+3、Linux下动态库（so）编译时默认不导出，在Makefile中需要添加：-fvisibility=hidden
+
+
+52.使用libcurl库，官网下载库，只包含dll和一个def文件，由于vs使用dll需要一个导入的lib文件，可以通过lib命令将def转换成lib文件
+命令:lib /def:libcurl.def
+
+53.VS默认使用编码格式为GB2312，这给代码移植带来很大的不便，代码需要使用utf8,先安装插件ForceUTF8(NO BOM),然后再所有工程的
+C/C++附加选项填/utf-8
+
+54.QT只是一个开发库一套框架，既然是库就有32位与64位之分，所以安装QT的时候就会选择,如果想开发使用与32位于64位的QT程序，在安装选项中
+就要选择，可以同时选择两个，其中选项有mingw-32bit,msvc2015bit、msvc2015-64bit,msvc201764bit，这些是什么意思呢
+就是说QT的库使用上述编译器编译出来的，如果选择了对应版本，那么计算机上就必须要有相应的编译器，ming版的QT的安装包中顺带有
+mingw编译套件，但是msvs就得本地安装相应得mscv编译器了
+
+56.我计算机上安装的版本MSVC2015-32bit MSVC2015-64bit,我还以为只可以使用MSVC2015版本的IDE，其实还可以在构建套件中配置vs2017或更高版本的vs,
+只要选择好编译器版本与调试器版本就行,vs2017对应vs编译器为15，调试器版本为cdb
+
+56.如果QT编译时提示“无法运行rc.exe”，请用everything搜索rc.exe,复制相应平台(x86与x64)下的rc.exe与rc.dll到Qt\msvc2015\5.9.8\bin下
+
+
+57.c++编译出来的动态库是很通用的，大部分语言都可以使用c++的dll或so，但是c++调用其他语言就比较麻烦，还好微软对c++与c#的支持都比较好
+所以c++调用c#也比较方便，首先得在vs中将(公共语言运行时支持(/clr))开启，使用using "../Debug/C#.dll"导入即可,但得包括一些头文件才可
+使用
+
+58.c++编写动态库dll导出函数时一版为了能够事得导出函数可用，都会使用 extern "C" __declspec(dllexport) int ExportFunc(int)
+这样导出的函数没有问题，但是我就遇见一种情况，客户要求导出函数遵循__stdcall的调用方式，这样的话函数声明就会变成
+extern "C" __declspec(dllexport) __stdcall int ExportFunc(int),奇怪的是加了__stdcall之后，导出的函数名就会变成_ExportFunc@4这种c++
+导出函数方式，解决办法之一就是#pragma comment(linker, "/export:ExportFun=_ExportFunc@4")通过将导出函数alias(别名的方式导出)
+
+
+59.本条记录熬夜到凌晨3点，waveInOpen一个WIN的底层api，功能为打开麦克风，之前在编译的64位，没问题，但是换乘32位后，代码都没有
+改动，莫名其妙报了一个内存错误，排查一晚都没早到问题，最后一刻万能的度娘解救了我，waveInOpen里面有一个参数，回调函数，这个函数的
+原型为void CALLBACK waveInProc(
+   HWAVEIN   hwi,
+   UINT      uMsg,
+   DWORD_PTR dwInstance,
+   DWORD_PTR dwParam1,
+   DWORD_PTR dwParam2
+);
+忽略了一个参数CALLBACK，我自己定义的回调函数就是没有这个参数，导致堆栈调用错误,血的教训，以后要重视__stdcall和__cdel了
+
+
+60.最近使用portaudio取代winmm接口，portaudio还是比较好用的，他将底层的接口封装成一个易用的接口，注意里面的framesPerBuffer是每帧
+不代表字节数，每帧的大小：bit / 8 * channel,播放时一定要每帧填满数据，也不能填0,否则会有噪音或者吱吱声
+
+c++给Android开发动态库专题,使用Android Studio 3.5，4.0版本的SDKManager打不开,不知道怎么被玩坏了
+(1)下载Android Studio3.5:https://redirector.gvt1.com/edgedl/android/studio/install/3.5.1.0/android-studio-ide-191.5900203-windows.exe
+(2)安装完成后首次打开会提示安装Android SDK，Gradle，如果Gradle下载失败，就手动下载，然后放到相应目录下
+(3)打开SDKManger,安装NDK、Cmake、LLVM
+(4)安装一个Vad虚拟Android设备，用于调试，当然在真实的手机上更好
+(5)开发Android动态库,有两种构建工具,ndk和cmake，ndk使用Android.mk,cmake使用CMakeLists.txt,c++开发人员建议使用CMake
+(6)As3.5有专门用于创建Android动态库的工程，File-->New->New Project->Native C++ 设置好相应的工程参数，Language最好选Java
+(7)其实也不一定要通过Native C++来创建工程，只是通过Native C++创建的工程会在Android视图下app module的build.gradle中配置好cmake的相关参数,创建
+app文件夹和几个示例文件其实也可以手动创建和添加，也没几个参数，主要有:
+android {
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                cppFlags "" // c++参数，如指定c++11、c++14等，异常模式、等参数
+            }
+        }
+
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', // 需要生成的平台库,之前以为Android都是ARM架构，没想到也有x86架构，微软就出过x86的Android手机，Vad里面的虚拟机就是x86架构、汗
+                    'arm64-v8a'
+        }
+    }
+   
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt" // 指定CMakeLists.txt路径，关键代码
+            version "3.10.2" // cmake版本
+        }
+    }
+}
+
+(8)在cpp文件下包含了CMakeLists.txt和源码，所有的c/c++源文件都放在下面
+(9)可以参考生成的native-lib.cpp里面的调用，下面列出一些重点
+1.Java语言调用c++开发的库都需要通过Jni作为桥梁
+2.Jni文件就是一个c/c++文件，只是里面的类型都是经过映射的,需要包含#include <jni.h>，其实jin.h里面就是一堆类型typedef
+3.还有就是Jni的导出函数明是需要遵守规则的，不能随便取，不然Java里面识别不了，规则如下
+Java_前缀+全限定的类名下划线（_）分隔符 + Native函数名
+增加第一参数JNIEnv* env,增加第二个参数jobject,其他参数按类型映射,返回值按类型映射
+4.调用Native库需要创建一个Java类,比如类名叫MainActivity，包名(package)为com.example.myapplication，如下
+package com.example.myapplication;
+
+public class MainActivity extends AppCompatActivity {
+	// Used to load the 'native-lib' library on application startup.
+    static {
+        System.loadLibrary("native-lib"); // 加载Native库必须语句
+    }
+
+	public String externFunc() {
+		stringFromJNI(); // 调用c++库函数
+	}
+	/**
+     * A native method that is implemented by the 'native-lib' native library,
+     * which is packaged with this application.
+     */
+    public native String stringFromJNI(); // 需要调用的Native c++库函数
+}
+
+那对应上面的Jni里面的函数定义如下:
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_example_myapplication_MainActivity_stringFromJNI(
+        JNIEnv *env,
+        jobject /* this */) {
+    std::string hello = "Hello from C++";
+    return env->NewStringUTF(hello.c_str()); // 在这里面就可以任意的c++代码了，好爽
+}
+
+Java：前缀
+com_example_myapplication：包名
+MainActivity：类名
+stringFromJNI：Native函数名
+这样类MainActivity才可以调用函数stringFromJNI(),
+5.需要增加接口就在MainActivity类里增加一个成员函数，然后在native-lib里面增加相应的Jni接口
+6.就是要注意对应的类型映射，不然编译没错，运行时app会崩溃
+7.点击Build-->Make Project就可以生成so了，so在Project视图的app\build\intermediates\stripped_native_libs\debug\out\lib\arm64-v8a\libnative-lib.so,arm64-v8a属于架构
+8.点击Run app就可以看见效果了
+(10)ndk中提供了编译工具链,一般是LLVM的clang编译器
+
+
+61.使用jsoncpp遇到一个坑，"abcd" 默认的Reader连这种字符串都能解析成功，不符合正常思维，需要将json_reader.cpp里面的Features默认构造函数的strictRoot_改为true才能正常解析

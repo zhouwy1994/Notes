@@ -270,3 +270,204 @@ syscall.Syscall6(waveInInit, 5, uintptr(channels), uintptr(samplesPerSec),
 Install-Package RestSharp -Version 106.11.5-alpha.0.18
 
 41.一个不错的golang项目学习https://eddycjy.com/posts/go/gin/2018-02-11-api-01/
+
+42.一款不错的第三方excel处理库，处理excel不只是python得专利:https://github.com/360EntSecGroup-Skylar/excelize
+
+43.vscode作为Golang开发IDE配置，解决代码提示慢问题
+Go 扩展默认是使用大量的 Go 工具来提供各种功能的, 每个工具提供某个方面的能力, 比如代码提示是依靠 gocode 的.
+不过微软在开发 VS Code 过程中, 定义一种协议, 语言服务器协议, Language Server Protocol.
+这可是个好东西, 如果你需要开发编辑器或 IDE, 就不需要再为每种语言实现诸如自动完成, 代码提示等功能了, 直接利用 语言服务器协议 就行了.
+gopls 就是官方的语言服务器, 当前处于 alpha 状态.
+安装步骤:
+(1) go get golang.org/x/tools/gopls@latest (不要用-u选项,记得要设置goproxy)
+(2) 打开vscode Ctrl + Shift + P 输入"settings" 找到Open Settings(JSON),复制下面一段
+"go.useLanguageServer": true,
+"[go]": {
+    "editor.snippetSuggestions": "none",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    }
+},
+"gopls": {
+    "usePlaceholders": true, // add parameter placeholders when completing a function
+    "completionDocumentation": true // for documentation in completion items
+},
+"files.eol": "\n", // formatting only supports LF line endings
+保存，然后就可用了
+44.设置gopls后，就会存在gomod项目的代码跳转问题，这时就需要将vscode的workspace设置到go.mod目录
+
+45.传统Web应用MVC架构，其中的C层可划分成两层，协议层（Protocol Layout）和控制层（Controllor Layout）,
+协议层可支持http,rpc（thrift、grpc）,tcp等，协议解析完成后交由Controllor Layout层处理,这样的Web层就会
+支持多种协议访问
+
+46.http、rpc、restful、redis、mongdb、kafka、rabbit、etcd、docker、etcd、k8s、racher、elk
+
+47.如果只是像在for中进行range而不需要取值时，可以用以下语法
+slice := make([]struct{}, 100) for range slice {}
+
+47.type SelfStruct struct{
+	Member int
+}
+
+func(m SlefStruct)Func() {
+	m.Member = 10 // 并不能改变调用者的Member值,哪怕是以指针形式调用
+}
+
+func(m *SlefStruct) Func1() {
+	m.Member = 10 // 不管以值或指针形式调用,都可改变调用者的Member值
+}
+
+48.上述47例子，只要给自定义类型定义一个方法，不管是定义的是值类型还是指针类型，都可通过值或指针的值来调用
+但是如果是接口(interface就不一样了)，如下例子
+type SelfInterface interface {
+	Func()
+}
+
+type SelfStruct struct{
+	Member int
+}
+
+type SelfStruct1 struct{
+	Member int
+}
+
+func(m *SlefStruct)Func() {
+	m.Member = 10 // 并不能改变调用者的Member值,哪怕是以指针形式调用
+}
+
+func(m SlefStruct1)Func() {
+	m.Member = 10 // 并不能改变调用者的Member值,哪怕是以指针形式调用
+}
+
+
+var s SelfStruct
+var s1 SelfStruct
+var i SelfInterface
+i = s // 这样赋值报错，因为s不能转换成&s
+i = &s1 // 这样就不会报错，因为&s1可以转换成s1
+i.Func()
+
+49.Go的json有一个omitempty标签，意思是如果字段为空值，定义为false、0、零指针、nil接口值以及任何空数组、切片、映射或字符串,则该字段在json序列化时省略。
+
+50.包的未公开表示符不能被其他包引用，这会误导以为所有的未公开表示符都不能被访问，其实可以通过以下方法引用
+package pack
+type duration int64
+var value duration
+func New() duration {
+	return value
+}
+
+package pack1
+v := pack.New() // 这样以用是可以的
+解释：(1)标识符才用公开或未公开属性，而值没有
+(2)不能定义一个未公开类型的变量，但可以通过函数返回值的形式获取它的值
+50.golang内置函数func copy(dst, src []Type) int
+不仅可以复制两个slice，也可以将string复制给slice，很方便,当然不是想象中用来复制[]byte，任何类型的[]int []struct都可以用此函数
+
+51.理解goroutine的调度GMP机制
+前言:目前已处于多核CPU运行时代，这就是go语言具有优势的地方,按理说每个CPU核心运行一个操作系统线程，目前的cpu都有一个最重要指标，cpu核心数
+cpu核心数越多，可执行的并行任务就越多，注意这里区分并发和并行
+G：Goroutine go 协程 可理解为用户态线程
+M：thread 操作系统线程（内核态线程），在CPU上运行，最终的goruntine就是跑在M上,最大10000个，通过debug.SetMaxThreads设置
+P:Process（逻辑处理器）最大256可通过runtime.GOMAXPROCS设置（可以理解P是一个调度器）
+1.每个go进程都有两类goroutine运行队列,全局队列和每个P维护的本地队列
+2.每个goroutine被创建的时候都会加入一个本地队列或全局队列,一般会加入一个P的本地队列
+3.每个P必须和一个M绑定，P作为本地队列的调度器，M作为goroutine的执行器
+4.P负责将本地队列的G放到M中去运行，每个G有一个执行时间片，时间到了P又将G拿出来放在队列的尾部，换上队列头部的G，有点像一个防止插队的保安，哈哈
+5.每个go程序运行后P的数量就固定了，当然可以通过GOMAXPROCS设置，但最好是在程序开始的时候执行，运行过程中不建议更改
+6.M的数量就不固定了，它就只有一个最大数量限制，当goroutine多的时候，他就会多，那就有疑问了，P不是和M绑定的吗，不应该是P的数量等于M的数量吗？
+7.当M在执行G的过程中，如果G中遇到阻塞任务时，P发现之后就会把当前和自己绑定的M分离，重新创建一个M来执行队列中的G，我不可能一直等你啊，后面还有
+这么多人排队呢，这就是为什么P的数量不等于M的数量的原因
+8.当G从阻塞任务中恢复过来时，P又会把它拿回来放在本地运行队列中
+9.每当有一个被创建时，操作系统底层都会有一个线程被创建，Windows是CreateThread Linux是clone
+10.G任务的执行顺序是，P先从本地队列找，本地没有则从全局队列找（一次性转移(全局G个数/P个数）个，再去其它P中找（一次性转移一半）,看来P还是任劳任怨的,不会让自己太闲
+11.为什么叫逻辑处理器呢，这就得知道什么叫物理处理器了，每台计算机都有一个或多个物理处理器，每个物理处理器(核)同时只能运行一个操作系统线程，别看操作系统可以创建
+很多线程，其实每个处理器(核)同时只能运行一个线程，那这就得依赖操作系统底层的调度器了，调度器让每个线程都有相应的时间片，这是不是和Golang的GMP机制很像啊，这就是为什么
+GMP中的P叫逻辑处理器了，他就是模拟物理处理器的调度机制
+12.标准库中有一个函数，Gosched(),这个函数的功能是让出时间片给其他goroutine，它怎么实现的呢，当执行这个函数后，P就会把当前Goruntine重新放回队列尾部，执行队列头的G
+
+
+52.经常会有一个场景，有一个多重循环，我们需要从最里面的循环跳到最外层循环或者，跳到指定的循环，用break只能跳出当前循环，这时候就需要用LABEL了
+LABEL:
+	for {
+		for {
+			break LABEL // or countine LABEL
+		}
+	}
+53.之前一直使用time.Format("2006-01-02 15:04:05")来打印时间格式化字符串，但是这也只能打印到秒，"2006-01-02 15:04:05.999"可以打印到毫秒微秒，多加几个9
+
+54.学习别人优秀的经验
+## git代码合并
+- `master`作为最终发布到生产环境的分支,开发主分支在`dev`,个人开发分支在`feature-xxx`
+- 在`feature`分支合并到`dev`之前先运行 `golint ./...`处理警告, 然后rebase一下dev的代码。然后再合并到dev。(参考博文:https://www.jianshu.com/p/4079284dd970)
+- 尽量不要在`dev`上面出现*merge*节点，出现*merge*不便于代码回退和codereview
+- 出现需要紧急修复的提交，需要从`master`切一个`hotfix`分支进行代码修复。修复完成后分别合并到master和dev分支
+
+## 代码
+- service 中如果和用户相关的函数, 第一个参数都放 currentUser
+- 路由的路径对于模型有关的，切记用复数，其他使用名词的地方也都用复数
+
+## 业务目录
+- `src/model`下面主要放数据库结构相关的struct，**切记不做数据库连接**,其中和包名相同的文件里面定义struct，其他struct相关的实例方法定义在method文件里面。参考 `src/model/catalog`
+- `src/routes/helper` 定义了接口通用的一些帮助函数
+- `src/service/helper` 文件夹下面放和版本迭代关联不大的常用方法。可以将简单的数据库*增删改查*写到这个地方
+
+## 测试
+- 除了`src/routes`下面的测试直接放到了`test/src/routes`下面，其他的测试均放到各自的包里面进行测试
+- 由于后面测试要生成的数据需要比较多，所以`test/fakedata`下面写专门用来生成测试需要的数据的函数
+
+
+55.golang实现热更，有realize、endless，都可采用发送信号kill -1 $pid的方式来实现热更
+
+56.go 单元测试，一般执行go test之后只会执行当前目录下的test文件，想要执行当前目录下的所有目录中的test文件，需要运行
+go test ./...
+如果测试用例中有终端输出，则需使用-v参数
+
+57.在vscode编写go代码时,只有在main函数执行F5才能开始调试，不能在其他文件开始调试，需要在launch.json修改"program": "${workspaceFolder}",
+
+58.GORM中定义模型时，GORM帮我们定义了一个gorm.Model，增加id created_at updated_at deleted_at几个字段并且会自动更新,所有我们不用再
+重复定义这几个字段了，但是会有一个问题
+db.Create(model) // 这种写法是不会更新gorm.Model的几个字段
+db.Create(&model) // 正确
+如果不喜欢created_at字段名，可以自己定义，但是不会自动更新，需要Model实现BeforeCreate、BeforeUpdate、BeforeDelete几个接口
+如果需要将两个字段共同设置为唯一键，那么只要给他们的TAG定义时去一个相同的名字就行 unique_index:common_index
+
+59.gin中有很好用的binding，可以将请求参数与结构体绑定，支持url参数，请求Body，（Json,Xml,Yaml等）
+具体的tag:(参考https://blog.csdn.net/weixin_44540711/article/details/105211991)
+required 验证该值不是数据类型的默认零值。数字不为０，字符串不为 " ", slices, maps, pointers, interfaces, channels and functions 不为 nil
+isdefault 验证该值为数据类型默认值
+len=10 对于数字，长度将确保该值等于给定的参数。对于字符串，它会检查字符串长度是否与字符数完全相同。对于切片，数组和map，验证元素个数。
+max=10 对于数字，max将确保该值小于或等于给定的参数。对于字符串，它会检查字符串长度是否最多为该字符数。对于切片，数组和map，验证元素个数。
+eq=10 对于字符串和数字，eq将确保该值等于给定的参数。对于切片，数组和map，验证元素个数。
+ne=10 和eq相反
+oneof=red green (oneof=5 7 9) 对于字符串，整数和uint，oneof将确保该值是参数中的值之一。参数应该是由空格分隔的值列表。值可以是字符串或数字。
+gt=10 对于数字，这将确保该值大于给定的参数。对于字符串，它会检查字符串长度是否大于该字符数。对于切片，数组和map，它会验证元素个数。
+gt 对于time.Time确保时间值大于time.Now.UTC（）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

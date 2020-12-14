@@ -299,7 +299,7 @@ systemctl、service的服务就是通过这种方式启动
 46.设置ssh公钥登陆，并不是设置好authorized_keys就行的文件的权限位是有要求的,.ssh目录权限位700,authorized_keys权限位600,有可能不是一定的，用命令生成ssh参考
 
 47.有的很优秀的工具需要学习下:
-Docker、K8s、Jenkins、Rancher、Zabbix、Grafana、Es(ElasticSearch),Clickhouse
+Docker、K8s、Jenkins、Rancher、Zabbix、Grafana、Es(ElasticSearch),Clickhouse,ELK
 
 48.在本地创建了使用的git库后，想把这个库与远程库相关联,比如在github.com上创建了一个库:https://github.com/yourname/learngit.git
 本地库:git@112.124.109.39:~/dev/zyh/HaerBinBomSdk.git
@@ -336,7 +336,7 @@ troubleshooting模式，可以把原来系统挂载到光盘内操作
 
 56.编写http api文档，网上一个第三方api工具比较好用，APIDOC https://apidocjs.com/
 
-57.前端有个优秀的通用用户界面框架Vue
+57.前端开发框架recat、Vue、Bootstrap、Angular，完全的js语言开发，可通过第三方软件打包成android于ios应用
 
 
 58.一款常用的测试工具jmeter，可以用于http接口的压力测试
@@ -358,3 +358,94 @@ aplay -l 或 arecord -l
 自需要记住card 和device -Hwd:$card,$device
 播放：aplay -Dhw:0,1 test.wave
 录音：arecord -Dhw:0,0 -d 10 -f cd -r 44100 -c 2 -t wav test.wav
+
+
+
+
+61.使用adb通过网络连接android设备,打开开发者模式，USB调试,首先获取android设备ip，然后通过adb connect $androidIP,正常是连不上的
+需要使用数据线连接连接安卓设备,然后运行命令
+adb tcpip 5555 // 设置目标设备以监听端口5555上的TCP/IP进行连接.
+拔掉数据线,运行命令
+adb connect $androidIP:5555 // 连接安卓设备,注意安卓设备会弹出认证框点击确认
+adb shell
+
+62.adb常用命令
+adb shell // 进入安卓设备终端环境
+adb push /cpp/pic.jpg /sdcard/Video/ // 上传文件到安卓设备
+adb pull /sdcard/Video/pic.jpg /cpp/ // 下载安卓设备的文件
+adb reboot [bootloader|recovery]    // 重启设备,可选参数进入bootloader(刷机模式)或recovery(恢复模式)
+adb install test.apk -r     adb uninstall -k <package_name>    // 安装与卸载
+adb shell service list  // 后台服务列表
+adb shell input text "$cotent" // 向安卓设备发送文本信息，手机按键或触摸屏坏了，特别有用
+adb shell input keyevent 85 // 向安卓设备发送按键信息，手机按键或触摸屏坏了，特别有用，详细按键编号百度
+adb shell am start -a android.media.action.STILL_IMAGE_CAMERA // 打开相机，按理说可以打开任何应用，具体打开方式百度
+adb shell am start -a android.intent.action.CALL -d tel:10086 // 打电话
+adb exec-out screencap -p > sc.png // 截屏
+
+63.android studio中没有像QT中的转到槽的功能，只能将Button添加，然后打开xml，android:"$EventName"="EventHandle"
+然后Alt+Entry，可以创建EventHandle
+
+64.android studio需要使用第三方库时，怎么导入？首先找到build.gradle中添加库导入命令     
+implementation 'com.squareup.okhttp3:okhttp:3.0.1'
+刷新gradle就可以了
+
+65.vscode，比较喜欢它的代码风格,使用它阅读c++代码，需要安装c++插件"c/c++"，安装完成后打开c++项目,ctrl+shift+p/3782530
+打开命令模式输入:C/C++:Edit Configure,生成c_cpp_propreties.json，编辑includePath和defines可以方便的设置头文件目录以及一些宏定义
+
+66.二层交换机与三层交换机的概念和区别（http://m.elecfans.com/article/594508.html）讲的很好，二层交换机根据MAC地址转发，工作在网络架构
+的第二层（数据链路层），三层交换机具有路由功能，转发方式通过（ip地址路由+二层MAC转发），同一网络上的计算机如果超过一定数量（通常在200台左右，视通信协议而定），就很可能会因为网络上大量的广播而导致网络传输效率低下。为了避免在大型交换机上进行广播所引起的广播风暴，可将其进一步划分为多个虚拟网（VLAN）。但是这样做将导致一个问题：VLAN之间的通信必须通过路由器来实现。但是传统路由器也难以胜任VLAN之间的通信任务，因为相对于局域网的网络流量来说，传统的普通路由器的路由能力太弱。
+而且千兆级路由器的价格也是非常难以接受的。如果使用三层交换机上的千兆端口或百兆端口连接不同的子网或VLAN，就在保持性能的前提下，经济地解决了子网划分之后子网之间必须依赖路由器进行通信的问题，因此三层交换机是连接子网的理想设备。
+
+
+67.linux创建普通用户，没有root权限，之前一直都是修改sudoer文件，比较麻烦，现在有如下命令，可快速赋予普通用户root权限
+1.添加指定用户到root组:sudo gpasswd -a zhouwy root
+2.更新root用户组:newgrp root
+
+68.docker启动容器指定ip，docker指定的ip必须是用户自定义网络段,
+1.创建自定义网络:docker network create --subnet=172.18.0.0/16 k8net
+2.docker network ls 查看docker所有网段
+3.docker run -itd --network k8net --ip 172.18.0.2 centos /bin/bash
+
+68.docker主机文件映射,将宿主机内的文件或目录映射到容器内 -v
+docker run -itd -v /var/build:/vat/build centos /bin/bash // 将宿主机内/var/build目录映射到容器内的/var/build
+
+68.在学习k8s的过程中，需要至少三台机器才能搭建起一个k8s集群,但是没有这么多机器或虚拟机，所以就想到用docker容器来代替虚拟机
+因为每台节点都必须按照docker所以，需要在docker容器内运行docker，听起来有点...(其实业界早就有成熟的解决方案docker-in-docker)，但还是尝试了，遇见的第一个问题就是docker容器默认
+存储系统类型为Overlay2，该文件系统不再支持运行docker，所以得修改docker的默认文件系统，我准备修改成vfs，vi /etc/sysconfig/docker-storage
+将Overlay2修改为vfs，启动docker，第一个问题解决，第二个问题怎么都解决不了（可能是容器启动时没有加privileged参数），换了种思路
+docker的运行机制是客户端-服务器机制，客户端与服务器通过unix sock通信，就在/var/run/docker.sock
+只需要在docker容器内安装docker-cliet yum install docker-client
+让后通过把宿主机上的docker.sock映射到容器内，就可以了
+docker run -itd -v /var/run/docker.sock:/var/run/docker.sock centos:7 /sbin/init
+但是上面的命令执行后在容器里面就找不到/var/run/docker.sock，以为是没映射成功，其实不然，是我们执行了/sbin/init命令，
+该命令会清空/var/run下面的除系统自带的所以文件，也就是映射进来的docker.sock被清理了，解决办法就是把docker.sock映射到其他目录
+我这映射成了根目录，然后进入容器执行ln -s /docker.sock /var/run/docker.sock就行了
+其实在容器内运行的镜像都是运行在docker daemon的机器上的
+注意要将docker 容器当作虚拟机来用就必须要运行/sbin/init
+
+69.Dockerfile修改账户密码
+RUN echo "root:admin" | chpasswd
+也可在容器运行时指定密码
+
+70.大约在0.6版，privileged被引入docker。使用该参数，container内的root拥有真正的root权限。否则，container内的root只是外部的一个普通用户权限。
+如果需要将容器内的root用户赋予root权限，run --privileged=true
+
+71.docker默认的仓库在国外，所以pull image的速度比较慢，设置国内代理方法,vim /etc/docker/daemon.json （没有改文件则创建）
+添加以下内容:
+{
+  "registry-mirrors": ["http://ovfftd6p.mirror.aliyuncs.com"]
+}
+
+72.docker ps -a -q获取所有运行容器id,可以利用此命令来停止所有容器 docker stop $(docker ps -a -q)
+docker run -itd --privileged=true -v /run/docker.sock:/docker.sock -p 3580:80 -p 3443:443 --network k8net --ip 172.18.0.160 --hostname rancher --name rancher centos:docker /sbin/init
+
+
+
+
+
+
+
+
+
+
+
